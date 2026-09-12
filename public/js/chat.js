@@ -6,6 +6,7 @@ import {
   loadChats,
   renameConversation,
   saveChats,
+  clearAllChats,
   setActiveConversation
 } from "/js/storage.js?v=1.4.0";
 
@@ -45,7 +46,10 @@ const elements = {
   settingsPersonaMode: document.getElementById("settingsPersonaMode"),
   emptyHeading: document.getElementById("emptyHeading"),
   composerHint: document.getElementById("composerHint"),
-  chatStatus: document.getElementById("chatStatus")
+  chatStatus: document.getElementById("chatStatus"),
+  memoryStats: document.getElementById("memoryStats"),
+  memoryList: document.getElementById("memoryList"),
+  memoryClear: document.getElementById("memoryClear")
 };
 
 const menu = document.createElement("div");
@@ -782,6 +786,35 @@ menu.addEventListener("click", (event) => {
   closeMenu();
 });
 
+function renderMemoryPanel() {
+  if (!elements.memoryStats || !elements.memoryList) return;
+  let rawBytes = 0;
+  try {
+    rawBytes = (localStorage.getItem("fabian_chats") || "").length;
+  } catch {
+    rawBytes = 0;
+  }
+  const sorted = [...state.conversations].sort((a, b) => b.updatedAt - a.updatedAt);
+  const totalMessages = sorted.reduce((sum, c) => sum + c.messages.length, 0);
+  const kb = (rawBytes / 1024).toFixed(1);
+  elements.memoryStats.textContent =
+    sorted.length + " rozmów · " + totalMessages + " wiadomości · " + kb + " KB";
+  elements.memoryList.innerHTML = "";
+  for (const conversation of sorted.slice(0, 20)) {
+    const row = document.createElement("div");
+    row.className = "memoryRow";
+    const title = document.createElement("span");
+    title.className = "memoryRowTitle";
+    title.textContent = conversation.title;
+    const meta = document.createElement("span");
+    meta.className = "memoryRowMeta";
+    meta.textContent = conversation.messages.length + " wiad · " + formatTime(conversation.updatedAt);
+    row.appendChild(title);
+    row.appendChild(meta);
+    elements.memoryList.appendChild(row);
+  }
+}
+
 function openSettings() {
   elements.settingsApiKey.value = settings.apiKey;
   elements.settingsBaseUrl.value = settings.baseUrl;
@@ -792,6 +825,7 @@ function openSettings() {
     elements.settingsPersonaMode.value =
       settings.personaMode === "replace" ? "replace" : "append";
   }
+  renderMemoryPanel();
   elements.settingsOverlay.hidden = false;
 }
 
@@ -803,6 +837,19 @@ if (elements.chatStatus) {
   elements.chatStatus.addEventListener("click", () => {
     if (elements.chatStatus.classList.contains("warn")) {
       elements.chatStatus.hidden = true;
+    }
+  });
+}
+
+if (elements.memoryClear) {
+  elements.memoryClear.addEventListener("click", () => {
+    if (
+      window.confirm(
+        "Wyczyścić CAŁĄ pamięć Fabiana? Wszystkie rozmowy z tej przeglądarki znikną na zawsze."
+      )
+    ) {
+      clearAllChats();
+      window.location.reload();
     }
   });
 }

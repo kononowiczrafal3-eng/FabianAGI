@@ -1,20 +1,28 @@
 const buckets = new Map();
-const maxRequests = 30;
-const windowMs = 60 * 1000;
+const capacity = 40;
+const refillPerMs = 2 / 1000;
 const maxBuckets = 5000;
 
 export function rateLimit(key) {
   const now = Date.now();
   let bucket = buckets.get(key);
-  if (!bucket || now > bucket.resetAt) {
-    bucket = { count: 0, resetAt: now + windowMs };
+  if (!bucket) {
+    bucket = { tokens: capacity, updatedAt: now };
     buckets.set(key, bucket);
   }
-  bucket.count += 1;
+  bucket.tokens = Math.min(
+    capacity,
+    bucket.tokens + (now - bucket.updatedAt) * refillPerMs
+  );
+  bucket.updatedAt = now;
+  if (bucket.tokens < 1) {
+    return false;
+  }
+  bucket.tokens -= 1;
   if (buckets.size > maxBuckets) {
     for (const [bucketKey, value] of buckets) {
-      if (now > value.resetAt) buckets.delete(bucketKey);
+      if (now - value.updatedAt > 10 * 60 * 1000) buckets.delete(bucketKey);
     }
   }
-  return bucket.count <= maxRequests;
+  return true;
 }

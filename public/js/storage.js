@@ -152,3 +152,11 @@ export function addMessage(state, conversationId, role, content) {
   }
   return message;
 }
+
+export function clearAllChats() {
+  try {
+    localStorage.removeItem(storageKey);
+  } catch {
+    /* brak dostepu do localStorage */
+  }
+}

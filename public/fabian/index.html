@@ -14,7 +14,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/css/style.css?v=1.4.0">
-  <script src="/js/chat.js?v=1.4.0" type="module"></script>
+  <script src="/js/chat.js?v=1.4.2" type="module"></script>
 </head>
 <body class="appMode">
   <header class="siteHeader">
@@ -130,6 +130,13 @@
             <label for="settingsPersonality">Własna osobowość (opcjonalnie)</label>
             <textarea id="settingsPersonality" rows="4" maxlength="2000" placeholder="Np. Lubisz stary rock i zawsze masz przy sobie termos z herbatą. Nie znosisz poniedziałków."></textarea>
           </div>
+          <div class="settingsGroup">
+            <h3 class="settingsGroupTitle">Pamięć Fabiana</h3>
+            <p class="memoryStats mono" id="memoryStats">-</p>
+            <div class="memoryList" id="memoryList"></div>
+            <button class="btn btnSecondary btnSm" id="memoryClear" type="button">Wyczyść całą pamięć</button>
+          </div>
+
           <p class="modalNote">Klucz i persona przechowywane są wyłącznie w Twojej przeglądarce. Klucz wysyłamy tylko do wybranego API, a personę do modelu wraz z zapytaniem.</p>
           <div class="modalActions">
             <button class="btn btnSecondary" id="settingsClear" type="button">Wyczyść</button>
