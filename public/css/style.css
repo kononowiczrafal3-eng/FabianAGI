@@ -717,3 +717,30 @@ code {
   .modal { padding: 16px; }
   .chatEmpty p { font-size: 12.5px; }
 }
+
+/* subtelne animacje */
+@keyframes msgIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+.msg { animation: msgIn 0.25s ease both; }
+
+@keyframes popIn {
+  from { opacity: 0; transform: translateY(8px) scale(0.98); }
+  to { opacity: 1; transform: none; }
+}
+.modal { animation: popIn 0.2s ease both; }
+.chatMenu { animation: popIn 0.15s ease both; }
+.scrollPill { animation: popIn 0.18s ease both; }
+
+.sendBtn { transition: transform 0.1s ease, background 0.15s ease, opacity 0.15s ease; }
+.sendBtn:active:not(:disabled) { transform: scale(0.9); }
+
+.btn { transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease, transform 0.1s ease; }
+.btn:active { transform: scale(0.97); }
+
+.sideItem, .exampleChip, .sideMenuBtn { transition: background 0.12s ease, color 0.12s ease; }
+
+@media (prefers-reduced-motion: reduce) {
+  .msg, .modal, .chatMenu, .scrollPill { animation: none; }
+}

@@ -7,7 +7,7 @@ import {
   renameConversation,
   saveChats,
   setActiveConversation
-} from "/js/storage.js?v=1.1.0";
+} from "/js/storage.js?v=1.2.0";
 
 const state = loadChats();
 let sending = false;
@@ -524,7 +524,7 @@ async function requestAssistant(conversation, textEl, node, attachments) {
     });
   } finally {
     sending = false;
-    elements.sendBtn.disabled = false;
+    if (elements.sendBtn) elements.sendBtn.disabled = false;
   }
 }
 
@@ -568,7 +568,7 @@ function handleSend() {
   const [textEl, node] = createPlaceholder();
 
   sending = true;
-  elements.sendBtn.disabled = true;
+  if (elements.sendBtn) elements.sendBtn.disabled = true;
   renderSidebar();
   requestAssistant(conversation, textEl, node, sentAttachments);
 }
@@ -585,9 +585,10 @@ elements.composerInput.addEventListener("keydown", (event) => {
   }
 });
 
-elements.attachBtn.addEventListener("click", () => elements.fileInput.click());
+if (elements.attachBtn && elements.fileInput) {
+  elements.attachBtn.addEventListener("click", () => elements.fileInput.click());
 
-elements.fileInput.addEventListener("change", async () => {
+  elements.fileInput.addEventListener("change", async () => {
   const files = Array.from(elements.fileInput.files || []).slice(
     0,
     Math.max(0, 5 - pendingAttachments.length)
@@ -603,15 +604,20 @@ elements.fileInput.addEventListener("change", async () => {
   }
   elements.fileInput.value = "";
   renderAttachRow();
-});
+  });
+}
 
+if (elements.composerInput) {
 elements.composerInput.addEventListener("input", () => {
   elements.composerInput.style.height = "auto";
   elements.composerInput.style.height = Math.min(elements.composerInput.scrollHeight, 140) + "px";
   updateCounter();
-});
+  });
+}
 
+if (elements.chatScroll) {
 elements.chatScroll.addEventListener("scroll", syncPinned);
+}
 
 elements.scrollPill.addEventListener("click", forceScroll);
 
