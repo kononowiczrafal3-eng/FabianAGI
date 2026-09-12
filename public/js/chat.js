@@ -11,6 +11,7 @@ import {
 
 const state = loadChats();
 let sending = false;
+let pendingAttachments = [];
 const maxLength = 100;
 const settingsKey = "fabian_settings";
 
@@ -29,6 +30,9 @@ const elements = {
   sendBtn: document.getElementById("sendBtn"),
   scrollPill: document.getElementById("scrollPill"),
   charCounter: document.getElementById("charCounter"),
+  attachBtn: document.getElementById("attachBtn"),
+  fileInput: document.getElementById("fileInput"),
+  attachRow: document.getElementById("attachRow"),
   settingsBtn: document.getElementById("settingsBtn"),
   settingsOverlay: document.getElementById("settingsOverlay"),
   settingsClose: document.getElementById("settingsClose"),
@@ -75,6 +79,18 @@ function loadSettings() {
 }
 
 let settings = loadSettings();
+let defaultPersonality = "";
+
+fetch("/api/persona")
+  .then((res) => (res.ok ? res.json() : null))
+  .then((data) => {
+    if (data && typeof data.personality === "string") {
+      defaultPersonality = data.personality;
+    }
+  })
+  .catch(() => {
+    /* endpoint niedostepny - brak prefill */
+  });
 
 function persistSettings() {
   try {
@@ -300,7 +316,38 @@ function renderSidebar() {
   if (activeItem) activeItem.scrollIntoView({ block: "nearest" });
 }
 
-function buildMessageNode(role, content) {
+function createAttachChip(name, onRemove) {
+  const chip = document.createElement("span");
+  chip.className = "attachChip";
+  const label = document.createElement("span");
+  label.textContent = name;
+  chip.appendChild(label);
+  if (onRemove) {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.setAttribute("aria-label", "Usuń załącznik " + name);
+    btn.textContent = "×";
+    btn.addEventListener("click", onRemove);
+    chip.appendChild(btn);
+  }
+  return chip;
+}
+
+function renderAttachRow() {
+  if (!elements.attachRow) return;
+  elements.attachRow.innerHTML = "";
+  elements.attachRow.style.display = pendingAttachments.length ? "" : "none";
+  pendingAttachments.forEach((att, index) => {
+    elements.attachRow.appendChild(
+      createAttachChip(att.name, () => {
+        pendingAttachments.splice(index, 1);
+        renderAttachRow();
+      })
+    );
+  });
+}
+
+function buildMessageNode(role, content, attachments) {
   const node = document.createElement("div");
   node.className = "msg " + (role === "user" ? "msgUser" : "msgFabian");
   const avatar = document.createElement("div");
@@ -322,6 +369,14 @@ function buildMessageNode(role, content) {
   }
   body.appendChild(name);
   body.appendChild(text);
+  if (attachments && attachments.length) {
+    const row = document.createElement("div");
+    row.className = "msgAttach";
+    for (const att of attachments) {
+      row.appendChild(createAttachChip(att.name, null));
+    }
+    body.appendChild(row);
+  }
   node.appendChild(avatar);
   node.appendChild(body);
   return { node, text };
@@ -343,7 +398,11 @@ function renderMessages() {
   elements.chatEmpty.style.display = "none";
   elements.chatTitle.textContent = conversation.title;
   for (const message of conversation.messages) {
-    const { node, text } = buildMessageNode(message.role, message.content);
+    const { node, text } = buildMessageNode(
+      message.role,
+      message.content,
+      message.attachments
+    );
     if (message.role === "assistant") finalizeAssistant(text, message.content);
     elements.messages.appendChild(node);
   }
@@ -355,7 +414,7 @@ function renderAll() {
   renderMessages();
 }
 
-async function streamFabian(apiMessages, onDelta) {
+async function streamFabian(apiMessages, attachments, onDelta) {
   const body = { messages: apiMessages };
   if (keyLooksValid(settings.apiKey)) body.apiKey = settings.apiKey;
   const baseUrl = validBaseUrl(settings.baseUrl);
@@ -366,6 +425,7 @@ async function streamFabian(apiMessages, onDelta) {
       personality: settings.personality.trim()
     };
   }
+  if (attachments.length) body.attachments = attachments;
 
   const response = await fetch("/api/chat", {
     method: "POST",
@@ -441,12 +501,13 @@ function createPlaceholder() {
   return [text, node];
 }
 
-async function requestAssistant(conversation, textEl, node) {
+async function requestAssistant(conversation, textEl, node, attachments) {
+  const safeAttachments = Array.isArray(attachments) ? attachments : [];
   const apiMessages = conversation.messages
     .filter((m) => m.role === "user" || m.role === "assistant")
     .map((m) => ({ role: m.role, content: m.content }));
   try {
-    const full = await streamFabian(apiMessages, (delta) => {
+    const full = await streamFabian(apiMessages, safeAttachments, (delta) => {
       textEl.textContent = delta;
       updateScroll();
     });
@@ -458,7 +519,7 @@ async function requestAssistant(conversation, textEl, node) {
   } catch {
     showError(textEl, node, () => {
       node.remove();
-      requestAssistant(conversation, ...createPlaceholder());
+      requestAssistant(conversation, ...createPlaceholder(), safeAttachments);
       updateScroll();
     });
   } finally {
@@ -483,7 +544,10 @@ function handleSend() {
     conversation = createConversation(state, content.slice(0, 48));
   }
 
-  addMessage(state, conversation.id, "user", content);
+  const userMessage = addMessage(state, conversation.id, "user", content);
+  if (pendingAttachments.length) {
+    userMessage.attachments = pendingAttachments.map((att) => ({ name: att.name }));
+  }
   saveChats(state);
   elements.composerInput.value = "";
   elements.composerInput.style.height = "auto";
@@ -491,14 +555,22 @@ function handleSend() {
   elements.chatEmpty.style.display = "none";
   elements.chatTitle.textContent = conversation.title;
 
-  const userNode = buildMessageNode("user", content).node;
+  const sentAttachments = pendingAttachments.slice(0, 5);
+  pendingAttachments = [];
+  renderAttachRow();
+
+  const userNode = buildMessageNode(
+    "user",
+    content,
+    sentAttachments.map((att) => ({ name: att.name }))
+  ).node;
   elements.messages.appendChild(userNode);
   const [textEl, node] = createPlaceholder();
 
   sending = true;
   elements.sendBtn.disabled = true;
   renderSidebar();
-  requestAssistant(conversation, textEl, node);
+  requestAssistant(conversation, textEl, node, sentAttachments);
 }
 
 elements.composerForm.addEventListener("submit", (event) => {
@@ -511,6 +583,26 @@ elements.composerInput.addEventListener("keydown", (event) => {
     event.preventDefault();
     handleSend();
   }
+});
+
+elements.attachBtn.addEventListener("click", () => elements.fileInput.click());
+
+elements.fileInput.addEventListener("change", async () => {
+  const files = Array.from(elements.fileInput.files || []).slice(
+    0,
+    Math.max(0, 5 - pendingAttachments.length)
+  );
+  for (const file of files) {
+    if (file.size > 100 * 1024) continue;
+    try {
+      const text = await file.text();
+      pendingAttachments.push({ name: file.name, content: text });
+    } catch {
+      /* pliku nie dało się odczytać */
+    }
+  }
+  elements.fileInput.value = "";
+  renderAttachRow();
 });
 
 elements.composerInput.addEventListener("input", () => {
@@ -584,7 +676,8 @@ function openSettings() {
   elements.settingsApiKey.value = settings.apiKey;
   elements.settingsBaseUrl.value = settings.baseUrl;
   elements.settingsName.value = settings.name;
-  elements.settingsPersonality.value = settings.personality;
+  elements.settingsPersonality.value =
+    settings.personality || defaultPersonality;
   elements.settingsOverlay.hidden = false;
 }
 
@@ -606,6 +699,12 @@ elements.settingsSave.addEventListener("click", () => {
   };
   if (!keyLooksValid(settings.apiKey)) settings.apiKey = "";
   settings.baseUrl = validBaseUrl(settings.baseUrl);
+  if (
+    defaultPersonality &&
+    settings.personality.trim() === defaultPersonality.trim()
+  ) {
+    settings.personality = "";
+  }
   persistSettings();
   closeSettingsModal();
   updateIdentity();
@@ -642,6 +741,7 @@ function updateIdentity() {
   renderAll();
 }
 
+renderAttachRow();
 renderAll();
 updateCounter();
 updateIdentity();

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Fabian - Asystent AI | FabianAGI</title>
+  <title>Fabian Asystent AGI</title>
   <meta name="description" content="Porozmawiaj z Fabianem, asystentem AI FabianAGI do pracy z tekstem, kodem, analizą i codziennymi zadaniami.">
   <link rel="canonical" href="https://fabianagi.dev/fabian">
   <meta property="og:type" content="website">
@@ -20,8 +20,8 @@
   <header class="siteHeader">
     <div class="container navWrap">
       <a class="brand" href="/" aria-label="FabianAGI - strona główna">
-        <span class="brandMark"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><rect width="24" height="24" rx="8" fill="#ff6a1f"/><path fill="#131315" d="M8 17V7h8v2.2h-5.4v1.9H15v2.1h-4.4V17H8z"/></svg></span>
-        <span class="brandName">FabianAGI</span>
+        <span class="brandMark"><img src="https://media.discordapp.net/attachments/1274546962389274769/1352462103876866199/attachment-1.gif?ex=6aa6acbd&is=6aa55b3d&hm=3418edee7632d8e2f233b7d0db9146fa0fe9ec4f67c7a018937b0368478b7def&=" alt="" width="20" height="20"></span>
+        <span class="brandName">Fabian</span>
       </a>
       <nav class="mainNav" id="mainNav" aria-label="Nawigacja główna">
         <a href="/">Zaczynajmy</a>
@@ -32,14 +32,14 @@
       <button class="navToggle" id="navToggle" aria-label="Przełącz menu" aria-expanded="false"><span></span><span></span><span></span></button>
     </div>
   </header>
+    <main class="appMain">
   <div class="container crumbsWrap">
       <nav class="crumbs" aria-label="Okruszki nawigacji">
-        <a href="/">FabianAGI</a>
+        <a href="/">Fabian</a>
         <span class="crumbSep" aria-hidden="true">/</span>
         <span aria-current="page">Fabian</span>
       </nav>
     </div>
-    <main class="appMain">
       <div class="chatApp">
         <aside class="chatSidebar" id="chatSidebar" aria-label="Rozmowy">
           <div class="sideTop">
@@ -67,7 +67,7 @@
             <div class="chatEmpty" id="chatEmpty">
               <div class="emptyAvatar" aria-hidden="true">F</div>
               <h1 id="emptyHeading">Cześć, jestem Fabian.</h1>
-              <p>Pytaj o cokolwiek - kod, teksty, plany albo zaproponuj scenkę.</p>
+              <p>Pytaj o cokolwiek.</p>
             </div>
             <div class="messages" id="messages"></div>
           </div>
@@ -77,10 +77,15 @@
           </button>
 
           <form class="chatComposer" id="composerForm">
+            <div class="attachRow" id="attachRow"></div>
             <div class="composerBox">
+              <button class="iconBtn" id="attachBtn" type="button" aria-label="Załącz plik tekstowy" title="Załącz plik tekstowy (txt, md, csv, json...)">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M7.75 2a.75.75 0 0 1 .75.75V7h4.25a.75.75 0 0 1 0 1.5H8.5v4.25a.75.75 0 0 1-1.5 0V8.5H2.75a.75.75 0 0 1 0-1.5H7V2.75A.75.75 0 0 1 7.75 2z"/></svg>
+              </button>
+              <input type="file" id="fileInput" hidden multiple accept=".txt,.md,.markdown,.csv,.json,.log,.xml,.html,.htm,.js,.ts,.css,.py,.yml,.yaml,.ini,.toml,.sh,.sql,.rtf">
               <label class="srOnly" for="composerInput">Wiadomość do Fabiana</label>
               <textarea id="composerInput" rows="1" maxlength="100" placeholder="Napisz wiadomość…"></textarea>
-              <button class="sendBtn" id="sendBtn" type="submit" aria-label="Wyślij wiadomość" disabled>
+              <button class="sendBtn" id="sendBtn" type="submit" aria-label="Wyślij wiadomość">
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M1.72 1.72a.75.75 0 0 1 1.06-.03l11.5 10.5a.75.75 0 0 1-.43 1.36H8.24l-2.1 4.4a.75.75 0 0 1-1.36-.06L1.69 2.78a.75.75 0 0 1 .03-1.06z"/></svg>
               </button>
             </div>
@@ -100,7 +105,7 @@
               <svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M3.72 3.72a.75.75 0 0 1 1.06 0L8 6.94l3.22-3.22a.75.75 0 1 1 1.06 1.06L9.06 8l3.22 3.22a.75.75 0 1 1-1.06 1.06L8 9.06l-3.22 3.22a.75.75 0 0 1-1.06-1.06L6.94 8 3.72 4.78a.75.75 0 0 1 0-1.06z"/></svg>
             </button>
           </div>
-          <p class="modalDesc">Domyślnie czat działa na kluczu platformy - nic nie musisz ustawiać. Jeśli wolisz, możesz użyć własnego klucza API (Groq lub dowolne API zgodne z OpenAI). Imię i osobowość działają niezależnie od wybranego klucza.</p>
+          <p class="modalDesc">Możesz użyć własnego klucza API (Groq lub dowolne API zgodne z OpenAI). Imię i osobowość działają niezależnie od wybranego klucza.</p>
           <div class="field">
             <label for="settingsApiKey">Własny klucz API (opcjonalny)</label>
             <input type="password" id="settingsApiKey" placeholder="gsk_..." autocomplete="new-password" spellcheck="false">
@@ -117,7 +122,7 @@
             <label for="settingsPersonality">Własna osobowość (opcjonalnie)</label>
             <textarea id="settingsPersonality" rows="4" maxlength="2000" placeholder="Np. Jesteś starym marynarzem pełnym opowieści. Masz miękkie serce i suchy humor."></textarea>
           </div>
-          <p class="modalNote">Klucz i persona przechowywane są wyłącznie w Twojej przeglądarce (localStorage). Klucz wysyłamy tylko do wybranego API, a personę - do modelu wraz z zapytaniem.</p>
+          <p class="modalNote">Klucz i persona przechowywane są wyłącznie w Twojej przeglądarce. Klucz wysyłamy tylko do wybranego API, a personę do modelu wraz z zapytaniem.</p>
           <div class="modalActions">
             <button class="btn btnSecondary" id="settingsClear" type="button">Wyczyść</button>
             <button class="btn btnPrimary" id="settingsSave" type="button">Zapisz</button>
@@ -125,23 +130,6 @@
         </div>
       </div>
     </main>
-  <footer class="siteFooter">
-    <div class="container footerWrap">
-      <div class="footerCol">
-        <a class="brand" href="/">
-          <span class="brandName">FabianAGI</span>
-        </a>
-      </div>
-      <nav class="footerCol" aria-label="Nawigacja w stopce">
-        <a href="/fabian">Fabian</a>
-        <a href="/wyniki">Wyniki</a>
-        <a href="/prywatnosc">Prywatność</a>
-      </nav>
-      <div class="footerCol footerCopy">
-        <span>© 2026 FabianAGI</span>
-      </div>
-    </div>
-  </footer>
   <script src="/js/main.js?v=1.1.0"></script>
 </body>
 </html>

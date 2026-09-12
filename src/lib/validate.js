@@ -1,7 +1,6 @@
 const allowedRoles = new Set(["user", "assistant"]);
 
 export const limits = {
-  maxMessages: 60,
   maxUserMessageLength: 100,
   maxAssistantMessageLength: 12000,
   maxBodyBytes: 100 * 1024
@@ -14,9 +13,6 @@ export function validateChatBody(body) {
   const messages = body.messages;
   if (!Array.isArray(messages) || messages.length === 0) {
     return { ok: false, error: "Brak wiadomości." };
-  }
-  if (messages.length > limits.maxMessages) {
-    return { ok: false, error: "Zbyt długa rozmowa. Utwórz nową." };
   }
   const clean = [];
   for (const message of messages) {
@@ -66,4 +62,31 @@ export function sanitizePersona(raw) {
     if (personality) result.personality = personality;
   }
   return Object.keys(result).length ? result : null;
+}
+
+export function sanitizeAttachments(raw) {
+  if (!Array.isArray(raw)) return [];
+  const clean = [];
+  for (const item of raw.slice(0, 5)) {
+    if (!item || typeof item !== "object") return [];
+    if (typeof item.name !== "string" || !item.name.trim() || item.name.length > 200) {
+      return [];
+    }
+    if (typeof item.content !== "string" || !item.content.trim() || item.content.length > 20000) {
+      return [];
+    }
+    clean.push({ name: item.name.trim(), content: item.content.slice(0, 20000) });
+  }
+  return clean;
+}
+
+export function composeMessages(messages, attachments) {
+  if (!attachments.length) return messages;
+  const last = messages[messages.length - 1];
+  if (!last || last.role !== "user") return messages;
+  const parts = [last.content, "", "Załączone pliki:"];
+  for (const att of attachments) {
+    parts.push("### " + att.name + "\n" + att.content);
+  }
+  return [...messages.slice(0, -1), { role: "user", content: parts.join("\n") }];
 }

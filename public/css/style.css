@@ -618,13 +618,102 @@ code {
   background: var(--orange);
 }
 
-/* tryb aplikacji: czat na caly ekran, zero przewijania strony */
-.appMode { height: 100dvh; overflow: hidden; display: flex; flex-direction: column; }
-.appMode .siteHeader { flex: none; }
-.appMode .crumbsWrap { flex: none; }
-.appMode main.appMain { flex: 1; min-height: 0; height: auto; }
-.appMode .siteFooter { display: none; }
+/* tryb aplikacji: czat na stale pod naglowkiem, zero przewijania strony */
+.appMode { overflow: hidden; }
+.appMode .appMain {
+  position: fixed;
+  top: 58px;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  height: auto;
+  min-height: 0;
+}
+.appMode .crumbsWrap { flex: none; padding-top: 10px; padding-bottom: 6px; }
+.appMode .chatApp { flex: 1; min-height: 0; height: auto; }
 
-@supports (height: 100dvh) {
-  .appMode { height: 100dvh; }
+.brandMark img {
+  display: block;
+  width: 20px;
+  height: 20px;
+  object-fit: cover;
+}
+
+.hero {
+  background-image: url("https://giffiles.alphacoders.com/119/119858.gif");
+  background-size: cover;
+  background-position: center;
+}
+.hero h1,
+.hero .lead {
+  color: #fff;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+}
+
+.attachRow {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  max-width: 740px;
+  margin: 0 auto 8px;
+  width: 92%;
+}
+.attachChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 11.5px;
+  color: var(--text2);
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 4px 6px 4px 12px;
+}
+.attachChip button {
+  background: none;
+  border: none;
+  color: var(--text3);
+  cursor: pointer;
+  font-size: 13px;
+  line-height: 1;
+  padding: 0 6px;
+}
+.attachChip button:hover { color: var(--text); }
+.msgAttach { margin-top: 6px; display: flex; gap: 6px; flex-wrap: wrap; }
+.msgAttach .attachChip { padding: 3px 12px; }
+
+/* wersja kompaktowa czatu */
+.chatTopbar { padding: 8px 14px; }
+.chatTitle { font-size: 14px; }
+
+.chatSidebar { width: 260px; }
+.sideTop { padding: 10px 10px 8px; }
+.sideItem { padding: 7px 9px; font-size: 13px; }
+
+.messages { gap: 16px; padding: 20px 0 6px; max-width: 720px; }
+.msg { gap: 10px; }
+.msgAvatar { width: 26px; height: 26px; font-size: 11px; border-radius: 7px; }
+.msgName { font-size: 11.5px; margin-bottom: 2px; }
+.msgText { font-size: 14px; }
+.msgBubble { padding: 7px 11px; }
+.md p { margin: 0 0 8px; }
+.md pre.mdCode { padding: 10px 12px; margin: 0 0 8px; }
+
+.chatEmpty { padding: 24px; }
+.emptyAvatar { width: 40px; height: 40px; font-size: 17px; margin-bottom: 6px; }
+.chatEmpty h1 { font-size: clamp(19px, 3vw, 23px); }
+
+.composerBox { padding: 6px; }
+.composerNote { flex-wrap: wrap; }
+
+@media (max-width: 860px) {
+  .composerBox textarea { font-size: 16px; }
+  .chatSidebar { width: 280px; }
+  .messages { width: 94%; }
+  .scrollPill { bottom: 96px; }
+  .modal { padding: 16px; }
+  .chatEmpty p { font-size: 12.5px; }
 }

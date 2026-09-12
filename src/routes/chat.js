@@ -1,6 +1,12 @@
 import { createGroqClient, streamChat } from "../lib/groq.js";
 import { rateLimit } from "../lib/rateLimit.js";
-import { limits, sanitizePersona, validateChatBody } from "../lib/validate.js";
+import {
+  composeMessages,
+  limits,
+  sanitizeAttachments,
+  sanitizePersona,
+  validateChatBody
+} from "../lib/validate.js";
 
 const groqClient = process.env.GROQ_API_KEY
   ? createGroqClient(process.env.GROQ_API_KEY)
@@ -110,7 +116,9 @@ export async function handleChat(req, res) {
 
   try {
     const persona = sanitizePersona(body.persona);
-    const stream = await streamChat(resolved.client, check.messages, persona);
+    const attachments = sanitizeAttachments(body.attachments);
+    const providerMessages = composeMessages(check.messages, attachments);
+    const stream = await streamChat(resolved.client, providerMessages, persona);
     for await (const chunk of stream) {
       const delta = chunk?.choices?.[0]?.delta?.content ?? "";
       if (delta) {

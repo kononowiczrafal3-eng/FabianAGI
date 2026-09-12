@@ -3,12 +3,24 @@ const backupKey = "fabian_chats_backup";
 
 const emptyState = () => ({ version: 1, activeId: null, conversations: [] });
 
+function isValidAttachment(att) {
+  return (
+    att &&
+    typeof att === "object" &&
+    typeof att.name === "string" &&
+    att.name.length <= 200
+  );
+}
+
 function isValidMessage(message) {
   return (
     message &&
     typeof message === "object" &&
     (message.role === "user" || message.role === "assistant") &&
-    typeof message.content === "string"
+    typeof message.content === "string" &&
+    (message.attachments === undefined ||
+      (Array.isArray(message.attachments) &&
+        message.attachments.every(isValidAttachment)))
   );
 }
 
@@ -61,12 +73,34 @@ export function loadChats() {
   }
 }
 
+function pruneState(state) {
+  const clone = {
+    ...state,
+    conversations: [...state.conversations].sort((a, b) => b.updatedAt - a.updatedAt)
+  };
+  const kept = [];
+  for (const conversation of clone.conversations) {
+    if (conversation.id === state.activeId || kept.length < 10) {
+      kept.push({ ...conversation });
+    }
+  }
+  clone.conversations = kept;
+  return clone;
+}
+
 export function saveChats(state) {
   try {
     localStorage.setItem(storageKey, JSON.stringify(state));
     return true;
   } catch {
-    console.warn("fabian_chats: zapis do localStorage nie powiódł się (przekroczony limit?)");
+    /* przekroczony limit - probujemy z przycieta wersja */
+  }
+  try {
+    localStorage.setItem(storageKey, JSON.stringify(pruneState(state)));
+    console.warn("fabian_chats: zapisano przyciętą wersję rozmów (limit localStorage)");
+    return true;
+  } catch {
+    console.warn("fabian_chats: zapis do localStorage nie powiódł się");
     return false;
   }
 }
