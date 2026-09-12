@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fabian - Asystent AI | FabianAGI</title>
+  <meta name="description" content="Porozmawiaj z Fabianem, asystentem AI FabianAGI do pracy z tekstem, kodem, analizą i codziennymi zadaniami.">
+  <link rel="canonical" href="https://fabianagi.dev/fabian">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Fabian - Asystent AI | FabianAGI">
+  <meta property="og:description" content="Porozmawiaj z Fabianem, asystentem AI FabianAGI do pracy z tekstem, kodem, analizą i codziennymi zadaniami.">
+  <meta property="og:url" content="https://fabianagi.dev/fabian">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css?v=1.1.0">
+  <script src="/js/chat.js?v=1.1.0" type="module"></script>
+</head>
+<body class="appMode">
+  <header class="siteHeader">
+    <div class="container navWrap">
+      <a class="brand" href="/" aria-label="FabianAGI - strona główna">
+        <span class="brandMark"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><rect width="24" height="24" rx="8" fill="#ff6a1f"/><path fill="#131315" d="M8 17V7h8v2.2h-5.4v1.9H15v2.1h-4.4V17H8z"/></svg></span>
+        <span class="brandName">FabianAGI</span>
+      </a>
+      <nav class="mainNav" id="mainNav" aria-label="Nawigacja główna">
+        <a href="/">Zaczynajmy</a>
+        <a href="/fabian" class="active" aria-current="page">Fabian</a>
+        <a href="/wyniki">Wyniki</a>
+        <a href="/prywatnosc">Prywatność</a>
+      </nav>
+      <button class="navToggle" id="navToggle" aria-label="Przełącz menu" aria-expanded="false"><span></span><span></span><span></span></button>
+    </div>
+  </header>
+  <div class="container crumbsWrap">
+      <nav class="crumbs" aria-label="Okruszki nawigacji">
+        <a href="/">FabianAGI</a>
+        <span class="crumbSep" aria-hidden="true">/</span>
+        <span aria-current="page">Fabian</span>
+      </nav>
+    </div>
+    <main class="appMain">
+      <div class="chatApp">
+        <aside class="chatSidebar" id="chatSidebar" aria-label="Rozmowy">
+          <div class="sideTop">
+            <button class="btn btnSecondary sideNew" id="newChatBtn" type="button">
+              <svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M7.75 2a.75.75 0 0 1 .75.75V7h4.25a.75.75 0 0 1 0 1.5H8.5v4.25a.75.75 0 0 1-1.5 0V8.5H2.75a.75.75 0 0 1 0-1.5H7V2.75A.75.75 0 0 1 7.75 2z"/></svg>
+              Nowa rozmowa
+            </button>
+          </div>
+          <nav class="sideList" id="sideList" aria-label="Historia rozmów"></nav>
+        </aside>
+        <div class="sideOverlay" id="sideOverlay"></div>
+
+        <section class="chatMain" aria-label="Rozmowa z Fabianem">
+          <div class="chatTopbar">
+            <button class="iconBtn sideToggle" id="sideToggle" type="button" aria-label="Pokaż rozmowy">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M1.5 3.25a.75.75 0 0 1 .75-.75h11.5a.75.75 0 0 1 0 1.5H2.25a.75.75 0 0 1-.75-.75zm0 4.75a.75.75 0 0 1 .75-.75h11.5a.75.75 0 0 1 0 1.5H2.25A.75.75 0 0 1 1.5 8zm.75 3.5a.75.75 0 0 0 0 1.5h11.5a.75.75 0 0 0 0-1.5H2.25z"/></svg>
+            </button>
+            <span class="chatTitle" id="chatTitle">Nowa rozmowa</span>
+            <button class="iconBtn settingsBtn" id="settingsBtn" type="button" aria-label="Ustawienia" title="Ustawienia">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 4.75a3.25 3.25 0 1 0 0 6.5 3.25 3.25 0 0 0 0-6.5zM8 0a1 1 0 0 1 1 1v1.06a5.6 5.6 0 0 1 1.94.8l.75-.75a1 1 0 1 1 1.41 1.41l-.75.75c.35.6.62 1.25.8 1.94H15a1 1 0 1 1 0 2h-1.06a5.6 5.6 0 0 1-.8 1.94l.75.75a1 1 0 0 1-1.41 1.41l-.75-.75a5.6 5.6 0 0 1-1.94.8V15a1 1 0 1 1-2 0v-1.06a5.6 5.6 0 0 1-1.94-.8l-.75.75a1 1 0 0 1-1.41-1.41l.75-.75a5.6 5.6 0 0 1-.8-1.94H1a1 1 0 1 1 0-2h1.06a5.6 5.6 0 0 1 .8-1.94l-.75-.75A1 1 0 1 1 3.52 3.52l.75.75c.6-.35 1.25-.62 1.94-.8V1a1 1 0 0 1 1-1z"/></svg>
+            </button>
+          </div>
+
+          <div class="chatScroll" id="chatScroll">
+            <div class="chatEmpty" id="chatEmpty">
+              <div class="emptyAvatar" aria-hidden="true">F</div>
+              <h1 id="emptyHeading">Cześć, jestem Fabian.</h1>
+              <p>Pytaj o cokolwiek - kod, teksty, plany albo zaproponuj scenkę.</p>
+            </div>
+            <div class="messages" id="messages"></div>
+          </div>
+          <button class="scrollPill" id="scrollPill" type="button" hidden>
+            <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8.53 11.78a.75.75 0 0 1-1.06 0l-3.5-3.5a.75.75 0 1 1 1.06-1.06L8 9.69l2.97-2.97a.75.75 0 1 1 1.06 1.06l-3.5 3.5z"/></svg>
+            Najnowsze
+          </button>
+
+          <form class="chatComposer" id="composerForm">
+            <div class="composerBox">
+              <label class="srOnly" for="composerInput">Wiadomość do Fabiana</label>
+              <textarea id="composerInput" rows="1" maxlength="100" placeholder="Napisz wiadomość…"></textarea>
+              <button class="sendBtn" id="sendBtn" type="submit" aria-label="Wyślij wiadomość" disabled>
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M1.72 1.72a.75.75 0 0 1 1.06-.03l11.5 10.5a.75.75 0 0 1-.43 1.36H8.24l-2.1 4.4a.75.75 0 0 1-1.36-.06L1.69 2.78a.75.75 0 0 1 .03-1.06z"/></svg>
+              </button>
+            </div>
+            <p class="composerNote">
+              <span id="composerHint">Enter - wyślij · Shift + Enter - nowa linia</span>
+              <span class="charCounter" id="charCounter">0/100</span>
+            </p>
+          </form>
+        </section>
+      </div>
+
+      <div class="modalOverlay" id="settingsOverlay" hidden>
+        <div class="modal" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+          <div class="modalHead">
+            <h2 id="settingsTitle">Ustawienia</h2>
+            <button class="iconBtn" id="settingsClose" type="button" aria-label="Zamknij ustawienia">
+              <svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M3.72 3.72a.75.75 0 0 1 1.06 0L8 6.94l3.22-3.22a.75.75 0 1 1 1.06 1.06L9.06 8l3.22 3.22a.75.75 0 1 1-1.06 1.06L8 9.06l-3.22 3.22a.75.75 0 0 1-1.06-1.06L6.94 8 3.72 4.78a.75.75 0 0 1 0-1.06z"/></svg>
+            </button>
+          </div>
+          <p class="modalDesc">Domyślnie czat działa na kluczu platformy - nic nie musisz ustawiać. Jeśli wolisz, możesz użyć własnego klucza API (Groq lub dowolne API zgodne z OpenAI). Imię i osobowość działają niezależnie od wybranego klucza.</p>
+          <div class="field">
+            <label for="settingsApiKey">Własny klucz API (opcjonalny)</label>
+            <input type="password" id="settingsApiKey" placeholder="gsk_..." autocomplete="new-password" spellcheck="false">
+          </div>
+          <div class="field">
+            <label for="settingsBaseUrl">Adres API (opcjonalnie)</label>
+            <input type="url" id="settingsBaseUrl" placeholder="https://api.groq.com/openai/v1" autocomplete="off" spellcheck="false">
+          </div>
+          <div class="field">
+            <label for="settingsName">Imię asystenta</label>
+            <input type="text" id="settingsName" placeholder="Fabian" maxlength="30" autocomplete="off" spellcheck="false">
+          </div>
+          <div class="field">
+            <label for="settingsPersonality">Własna osobowość (opcjonalnie)</label>
+            <textarea id="settingsPersonality" rows="4" maxlength="2000" placeholder="Np. Jesteś starym marynarzem pełnym opowieści. Masz miękkie serce i suchy humor."></textarea>
+          </div>
+          <p class="modalNote">Klucz i persona przechowywane są wyłącznie w Twojej przeglądarce (localStorage). Klucz wysyłamy tylko do wybranego API, a personę - do modelu wraz z zapytaniem.</p>
+          <div class="modalActions">
+            <button class="btn btnSecondary" id="settingsClear" type="button">Wyczyść</button>
+            <button class="btn btnPrimary" id="settingsSave" type="button">Zapisz</button>
+          </div>
+        </div>
+      </div>
+    </main>
+  <footer class="siteFooter">
+    <div class="container footerWrap">
+      <div class="footerCol">
+        <a class="brand" href="/">
+          <span class="brandName">FabianAGI</span>
+        </a>
+      </div>
+      <nav class="footerCol" aria-label="Nawigacja w stopce">
+        <a href="/fabian">Fabian</a>
+        <a href="/wyniki">Wyniki</a>
+        <a href="/prywatnosc">Prywatność</a>
+      </nav>
+      <div class="footerCol footerCopy">
+        <span>© 2026 FabianAGI</span>
+      </div>
+    </div>
+  </footer>
+  <script src="/js/main.js?v=1.1.0"></script>
+</body>
+</html>

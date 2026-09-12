@@ -1,0 +1,15 @@
+{
+  "name": "fabianagi",
+  "version": "1.0.0",
+  "private": true,
+  "description": "FabianAGI — platforma AI z asystentem Fabian",
+  "type": "module",
+  "engines": { "node": ">=18" },
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "dependencies": {
+    "groq-sdk": "^1.5.0"
+  }
+}

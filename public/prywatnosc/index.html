@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Prywatność - FabianAGI</title>
+  <meta name="description" content="Informacje dotyczące prywatności i przetwarzania danych w FabianAGI.">
+  <link rel="canonical" href="https://fabianagi.dev/prywatnosc">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Prywatność - FabianAGI">
+  <meta property="og:description" content="Informacje dotyczące prywatności i przetwarzania danych w FabianAGI.">
+  <meta property="og:url" content="https://fabianagi.dev/prywatnosc">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css?v=1.1.0">
+  
+</head>
+<body>
+  <header class="siteHeader">
+    <div class="container navWrap">
+      <a class="brand" href="/" aria-label="FabianAGI - strona główna">
+        <span class="brandMark"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><rect width="24" height="24" rx="8" fill="#ff6a1f"/><path fill="#131315" d="M8 17V7h8v2.2h-5.4v1.9H15v2.1h-4.4V17H8z"/></svg></span>
+        <span class="brandName">FabianAGI</span>
+      </a>
+      <nav class="mainNav" id="mainNav" aria-label="Nawigacja główna">
+        <a href="/">Zaczynajmy</a>
+        <a href="/fabian">Fabian</a>
+        <a href="/wyniki">Wyniki</a>
+        <a href="/prywatnosc" class="active" aria-current="page">Prywatność</a>
+      </nav>
+      <button class="navToggle" id="navToggle" aria-label="Przełącz menu" aria-expanded="false"><span></span><span></span><span></span></button>
+    </div>
+  </header>
+  <div class="container crumbsWrap">
+      <nav class="crumbs" aria-label="Okruszki nawigacji">
+        <a href="/">FabianAGI</a>
+        <span class="crumbSep" aria-hidden="true">/</span>
+        <span aria-current="page">Prywatność</span>
+      </nav>
+    </div>
+    <main>
+      <section class="pageSection">
+        <div class="container narrow">
+          <div class="sectionHead">
+            <span class="kicker">dokument</span>
+            <h1>Prywatność</h1>
+          </div>
+
+          <article class="docBody">
+            <h2>Third Party may collect data</h2>
+            <p>Fabian korzysta z zewnętrznego dostawcy modeli AI (Groq), aby generować odpowiedzi. Treść wiadomości wysyłanych w bieżącej rozmowie jest przekazywana temu dostawcy w celu uzyskania odpowiedzi. Dostawca może przetwarzać te dane zgodnie z własną polityką prywatności.</p>
+
+            <h2>Co jest przechowywane lokalnie</h2>
+            <p>Twoje rozmowy zapisujemy w pamięci tej przeglądarki (localStorage, klucz <code>fabian_chats</code>). Nie wysyłamy całej lokalnej bazy rozmów na serwer - do dostawcy AI trafiają wyłącznie wiadomości potrzebne do bieżącego zapytania.</p>
+
+            <h2>Czego tu nie znajdziesz</h2>
+            <p>Nie obiecujemy „całkowitego bezpieczeństwa”, szyfrowania end-to-end ani natychmiastowego usuwania danych u dostawcy - te mechanizmy nie zostały w tej aplikacji wdrożone ani zweryfikowane, więc ich nie deklarujemy.</p>
+
+            <h2>Dodatkowe informacje</h2>
+            <p>Chcesz wiedzieć więcej o działaniu platformy? Zobacz, <a href="/fabian">jak działa Fabian</a>, lub wróć na <a href="/">stronę główną</a>.</p>
+          </article>
+        </div>
+      </section>
+    </main>
+  <footer class="siteFooter">
+    <div class="container footerWrap">
+      <div class="footerCol">
+        <a class="brand" href="/">
+          <span class="brandName">FabianAGI</span>
+        </a>
+      </div>
+      <nav class="footerCol" aria-label="Nawigacja w stopce">
+        <a href="/fabian">Fabian</a>
+        <a href="/wyniki">Wyniki</a>
+        <a href="/prywatnosc">Prywatność</a>
+      </nav>
+      <div class="footerCol footerCopy">
+        <span>© 2026 FabianAGI</span>
+      </div>
+    </div>
+  </footer>
+  <script src="/js/main.js?v=1.1.0"></script>
+</body>
+</html>
