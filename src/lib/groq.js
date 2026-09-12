@@ -61,12 +61,18 @@ export function createGroqClient(apiKey, baseURL) {
 
 export function buildSystemPrompt(persona) {
   if (!persona) return FABIAN_PERSONALITY;
+  const nameLine = persona.name ? "- Twoje imię to: " + persona.name : null;
+  if (persona.mode === "replace" && persona.personality) {
+    const parts = [persona.personality];
+    if (nameLine) parts.push("", "KONFIGURACJA UŻYTKOWNIKA:", nameLine);
+    return parts.join("\n");
+  }
   const parts = [
     FABIAN_PERSONALITY,
     "",
-    "KONFIGURACJA UŻYTKOWNIKA (nadpisuje domyślne ustawienia, gdzie dotyczy):"
+    "DODATKOWA KONFIGURACJA UŻYTKOWNIKA (dopisane cechy, nadpisują domyślne tam, gdzie się gryzą):"
   ];
-  if (persona.name) parts.push("- Twoje imię to: " + persona.name);
+  if (nameLine) parts.push(nameLine);
   if (persona.personality) parts.push("- " + persona.personality);
   return parts.join("\n");
 }

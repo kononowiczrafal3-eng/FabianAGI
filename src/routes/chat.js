@@ -1,5 +1,6 @@
 import { createGroqClient, streamChat } from "../lib/groq.js";
 import { rateLimit } from "../lib/rateLimit.js";
+import { extractTextFiles } from "../lib/zip.js";
 import {
   composeMessages,
   limits,
@@ -116,8 +117,23 @@ export async function handleChat(req, res) {
 
   try {
     const persona = sanitizePersona(body.persona);
-    const attachments = sanitizeAttachments(body.attachments);
-    const providerMessages = composeMessages(check.messages, attachments);
+    const rawAttachments = sanitizeAttachments(body.attachments);
+    const attachments = [];
+    for (const att of rawAttachments) {
+      if (att.zip) {
+        try {
+          const extracted = extractTextFiles(att.zip);
+          for (const file of extracted) {
+            attachments.push({ name: att.name + ":/" + file.name, content: file.content });
+          }
+        } catch {
+          /* uszkodzony zip - pomijamy */
+        }
+      } else {
+        attachments.push(att);
+      }
+    }
+    const providerMessages = composeMessages(check.messages, attachments.slice(0, 12));
     const stream = await streamChat(resolved.client, providerMessages, persona);
     for await (const chunk of stream) {
       const delta = chunk?.choices?.[0]?.delta?.content ?? "";

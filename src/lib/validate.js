@@ -1,9 +1,9 @@
 const allowedRoles = new Set(["user", "assistant"]);
 
 export const limits = {
-  maxUserMessageLength: 100,
+  maxUserMessageLength: 500,
   maxAssistantMessageLength: 12000,
-  maxBodyBytes: 100 * 1024
+  maxBodyBytes: 1024 * 1024
 };
 
 export function validateChatBody(body) {
@@ -38,7 +38,7 @@ export function validateChatBody(body) {
         ok: false,
         error:
           message.role === "user"
-            ? "Wiadomość może mieć maksymalnie 100 znaków."
+            ? "Wiadomość może mieć maksymalnie 500 znaków."
             : "Nieprawidłowa wiadomość."
       };
     }
@@ -61,7 +61,9 @@ export function sanitizePersona(raw) {
     const personality = raw.personality.trim().slice(0, 2000);
     if (personality) result.personality = personality;
   }
-  return Object.keys(result).length ? result : null;
+  if (raw.mode === "replace") result.mode = "replace";
+  if (!result.name && !result.personality) return null;
+  return result;
 }
 
 export function sanitizeAttachments(raw) {
@@ -72,10 +74,16 @@ export function sanitizeAttachments(raw) {
     if (typeof item.name !== "string" || !item.name.trim() || item.name.length > 200) {
       return [];
     }
-    if (typeof item.content !== "string" || !item.content.trim() || item.content.length > 20000) {
-      return [];
+    const name = item.name.trim();
+    if (typeof item.content === "string" && item.content.trim() && item.content.length <= 20000) {
+      clean.push({ name, content: item.content.slice(0, 20000) });
+      continue;
     }
-    clean.push({ name: item.name.trim(), content: item.content.slice(0, 20000) });
+    if (typeof item.zip === "string" && item.zip.length >= 100 && item.zip.length <= 900000) {
+      clean.push({ name, zip: item.zip });
+      continue;
+    }
+    return [];
   }
   return clean;
 }

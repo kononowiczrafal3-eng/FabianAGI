@@ -91,17 +91,17 @@ function pruneState(state) {
 export function saveChats(state) {
   try {
     localStorage.setItem(storageKey, JSON.stringify(state));
-    return true;
+    return "ok";
   } catch {
     /* przekroczony limit - probujemy z przycieta wersja */
   }
   try {
     localStorage.setItem(storageKey, JSON.stringify(pruneState(state)));
     console.warn("fabian_chats: zapisano przyciętą wersję rozmów (limit localStorage)");
-    return true;
+    return "pruned";
   } catch {
     console.warn("fabian_chats: zapis do localStorage nie powiódł się");
-    return false;
+    return "failed";
   }
 }
 

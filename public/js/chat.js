@@ -7,12 +7,12 @@ import {
   renameConversation,
   saveChats,
   setActiveConversation
-} from "/js/storage.js?v=1.2.0";
+} from "/js/storage.js?v=1.4.0";
 
 const state = loadChats();
 let sending = false;
 let pendingAttachments = [];
-const maxLength = 100;
+const maxLength = 500;
 const settingsKey = "fabian_settings";
 
 const elements = {
@@ -42,8 +42,10 @@ const elements = {
   settingsBaseUrl: document.getElementById("settingsBaseUrl"),
   settingsName: document.getElementById("settingsName"),
   settingsPersonality: document.getElementById("settingsPersonality"),
+  settingsPersonaMode: document.getElementById("settingsPersonaMode"),
   emptyHeading: document.getElementById("emptyHeading"),
-  composerHint: document.getElementById("composerHint")
+  composerHint: document.getElementById("composerHint"),
+  chatStatus: document.getElementById("chatStatus")
 };
 
 const menu = document.createElement("div");
@@ -61,7 +63,7 @@ function asCleanString(value) {
 }
 
 function loadSettings() {
-  const fallback = { apiKey: "", baseUrl: "", name: "", personality: "" };
+  const fallback = { apiKey: "", baseUrl: "", name: "", personality: "", personaMode: "append" };
   try {
     const raw = localStorage.getItem(settingsKey);
     if (!raw) return fallback;
@@ -71,7 +73,8 @@ function loadSettings() {
       apiKey: asCleanString(data.apiKey),
       baseUrl: asCleanString(data.baseUrl),
       name: asCleanString(data.name),
-      personality: asCleanString(data.personality)
+      personality: asCleanString(data.personality),
+      personaMode: data.personaMode === "replace" ? "replace" : "append"
     };
   } catch {
     return fallback;
@@ -120,6 +123,26 @@ function validBaseUrl(raw) {
   }
 }
 
+function setBusyStatus(text) {
+  if (!elements.chatStatus) return;
+  elements.chatStatus.textContent = text;
+  elements.chatStatus.className = "chatStatus busy";
+  elements.chatStatus.hidden = false;
+}
+
+function clearBusyStatus() {
+  if (!elements.chatStatus) return;
+  if (elements.chatStatus.classList.contains("warn")) return;
+  elements.chatStatus.hidden = true;
+}
+
+function setWarnStatus(text) {
+  if (!elements.chatStatus) return;
+  elements.chatStatus.textContent = text;
+  elements.chatStatus.className = "chatStatus warn";
+  elements.chatStatus.hidden = false;
+}
+
 function updateIndicators() {
   if (!elements.settingsBtn || !elements.composerHint) return;
   const customKey = keyLooksValid(settings.apiKey) ? settings.apiKey : "";
@@ -154,6 +177,31 @@ function formatInline(value) {
   return text;
 }
 
+function bufferToBase64(buffer) {
+  const bytes = new Uint8Array(buffer);
+  let binary = "";
+  const chunk = 0x8000;
+  for (let i = 0; i < bytes.length; i += chunk) {
+    binary += String.fromCharCode.apply(null, bytes.subarray(i, i + chunk));
+  }
+  return btoa(binary);
+}
+
+function isSeparatorRow(line) {
+  const t = line.trim();
+  if (!t.includes("|")) return false;
+  return /^[|\s:\-]+$/.test(t);
+}
+
+function splitTableRow(line) {
+  return line
+    .trim()
+    .replace(/^\|/, "")
+    .replace(/\|$/, "")
+    .split("|")
+    .map((cell) => cell.trim());
+}
+
 function renderMarkdown(source) {
   const lines = source.split("\n");
   let html = "";
@@ -174,22 +222,62 @@ function renderMarkdown(source) {
     }
   };
 
-  for (const line of lines) {
+  let i = 0;
+  while (i < lines.length) {
+    const line = lines[i];
     if (line.trim().startsWith("```")) {
       flushParagraph();
       closeList();
       html += inCode ? "</code></pre>" : '<pre class="mdCode"><code>';
       inCode = !inCode;
+      i += 1;
       continue;
     }
     if (inCode) {
       html += escapeHtml(line) + "\n";
+      i += 1;
       continue;
     }
     const trimmed = line.trim();
     if (!trimmed) {
       flushParagraph();
       closeList();
+      i += 1;
+      continue;
+    }
+    if (/^(-{3,}|\*{3,})$/.test(trimmed)) {
+      flushParagraph();
+      closeList();
+      html += "<hr>";
+      i += 1;
+      continue;
+    }
+    if (trimmed.startsWith("> ")) {
+      flushParagraph();
+      closeList();
+      const quote = [];
+      while (i < lines.length && lines[i].trim().startsWith("> ")) {
+        quote.push(lines[i].trim().slice(2));
+        i += 1;
+      }
+      html += "<blockquote>" + quote.map(formatInline).join("<br>") + "</blockquote>";
+      continue;
+    }
+    if (trimmed.includes("|") && i + 1 < lines.length && isSeparatorRow(lines[i + 1])) {
+      flushParagraph();
+      closeList();
+      const header = splitTableRow(trimmed);
+      i += 2;
+      const rows = [];
+      while (i < lines.length && lines[i].trim().includes("|") && lines[i].trim()) {
+        rows.push(splitTableRow(lines[i]));
+        i += 1;
+      }
+      html += "<table><thead><tr>" + header.map((h) => "<th>" + formatInline(h) + "</th>").join("") + "</tr></thead><tbody>";
+      for (const row of rows) {
+        html += "<tr>" + header.map((_, idx) => "<td>" + formatInline(row[idx] || "") + "</td>").join("") + "</tr>";
+      }
+      html += "</tbody></table>";
       continue;
     }
     const heading = trimmed.match(/^(#{1,4})\s+(.*)$/);
@@ -209,6 +297,7 @@ function renderMarkdown(source) {
         listType = "ul";
       }
       html += "<li>" + formatInline(ul[1]) + "</li>";
+      i += 1;
       continue;
     }
     const ol = trimmed.match(/^\d+[.)]\s+(.*)$/);
@@ -220,10 +309,12 @@ function renderMarkdown(source) {
         listType = "ol";
       }
       html += "<li>" + formatInline(ol[1]) + "</li>";
+      i += 1;
       continue;
     }
     closeList();
     paragraph.push(trimmed);
+    i += 1;
   }
   flushParagraph();
   closeList();
@@ -422,7 +513,8 @@ async function streamFabian(apiMessages, attachments, onDelta) {
   if (settings.name.trim() || settings.personality.trim()) {
     body.persona = {
       name: settings.name.trim(),
-      personality: settings.personality.trim()
+      personality: settings.personality.trim(),
+      mode: settings.personaMode === "replace" ? "replace" : "append"
     };
   }
   if (attachments.length) body.attachments = attachments;
@@ -525,6 +617,7 @@ async function requestAssistant(conversation, textEl, node, attachments) {
   } finally {
     sending = false;
     if (elements.sendBtn) elements.sendBtn.disabled = false;
+    clearBusyStatus();
   }
 }
 
@@ -548,7 +641,9 @@ function handleSend() {
   if (pendingAttachments.length) {
     userMessage.attachments = pendingAttachments.map((att) => ({ name: att.name }));
   }
-  saveChats(state);
+  if (saveChats(state) === "pruned") {
+    setWarnStatus("Historia przycięta - limit pamięci przeglądarki");
+  }
   elements.composerInput.value = "";
   elements.composerInput.style.height = "auto";
   updateCounter();
@@ -569,6 +664,7 @@ function handleSend() {
 
   sending = true;
   if (elements.sendBtn) elements.sendBtn.disabled = true;
+  setBusyStatus("Fabian pisze…");
   renderSidebar();
   requestAssistant(conversation, textEl, node, sentAttachments);
 }
@@ -593,17 +689,25 @@ if (elements.attachBtn && elements.fileInput) {
     0,
     Math.max(0, 5 - pendingAttachments.length)
   );
+  if (files.length) setBusyStatus("Wczytywanie plików…");
   for (const file of files) {
-    if (file.size > 100 * 1024) continue;
     try {
-      const text = await file.text();
-      pendingAttachments.push({ name: file.name, content: text });
+      if (file.name.toLowerCase().endsWith(".zip")) {
+        if (file.size > 400 * 1024) continue;
+        const buffer = await file.arrayBuffer();
+        pendingAttachments.push({ name: file.name, zip: bufferToBase64(buffer) });
+      } else {
+        if (file.size > 100 * 1024) continue;
+        const text = await file.text();
+        pendingAttachments.push({ name: file.name, content: text });
+      }
     } catch {
       /* pliku nie dało się odczytać */
     }
   }
   elements.fileInput.value = "";
   renderAttachRow();
+  clearBusyStatus();
   });
 }
 
@@ -684,11 +788,23 @@ function openSettings() {
   elements.settingsName.value = settings.name;
   elements.settingsPersonality.value =
     settings.personality || defaultPersonality;
+  if (elements.settingsPersonaMode) {
+    elements.settingsPersonaMode.value =
+      settings.personaMode === "replace" ? "replace" : "append";
+  }
   elements.settingsOverlay.hidden = false;
 }
 
 function closeSettingsModal() {
   elements.settingsOverlay.hidden = true;
+}
+
+if (elements.chatStatus) {
+  elements.chatStatus.addEventListener("click", () => {
+    if (elements.chatStatus.classList.contains("warn")) {
+      elements.chatStatus.hidden = true;
+    }
+  });
 }
 
 elements.settingsBtn.addEventListener("click", openSettings);
@@ -701,7 +817,12 @@ elements.settingsSave.addEventListener("click", () => {
     apiKey: elements.settingsApiKey.value.trim(),
     baseUrl: elements.settingsBaseUrl.value.trim(),
     name: elements.settingsName.value.trim().slice(0, 30),
-    personality: elements.settingsPersonality.value.trim().slice(0, 2000)
+    personality: elements.settingsPersonality.value.trim().slice(0, 2000),
+    personaMode:
+      elements.settingsPersonaMode &&
+      elements.settingsPersonaMode.value === "replace"
+        ? "replace"
+        : "append"
   };
   if (!keyLooksValid(settings.apiKey)) settings.apiKey = "";
   settings.baseUrl = validBaseUrl(settings.baseUrl);
@@ -717,12 +838,13 @@ elements.settingsSave.addEventListener("click", () => {
   updateIndicators();
 });
 elements.settingsClear.addEventListener("click", () => {
-  settings = { apiKey: "", baseUrl: "", name: "", personality: "" };
+  settings = { apiKey: "", baseUrl: "", name: "", personality: "", personaMode: "append" };
   persistSettings();
   elements.settingsApiKey.value = "";
   elements.settingsBaseUrl.value = "";
   elements.settingsName.value = "";
   elements.settingsPersonality.value = "";
+  if (elements.settingsPersonaMode) elements.settingsPersonaMode.value = "append";
   updateIdentity();
 });
 
