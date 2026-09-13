@@ -1196,14 +1196,84 @@ menu.addEventListener("click", (event) => {
     }
   }
   if (action === "delete") {
-    if (window.confirm("Usunąć tę rozmowę? Tej operacji nie można cofnąć.")) {
-      deleteConversation(state, menuTargetId);
-      saveChats(state);
-      renderAll();
-    }
+    confirmDialog("Usunąć rozmowę?", "Tej operacji nie można cofnąć.", "Usuń").then(
+      (yes) => {
+        if (!yes) return;
+        deleteConversation(state, menuTargetId);
+        saveChats(state);
+        renderAll();
+      }
+    );
   }
   closeMenu();
 });
+
+function confirmDialog(title, message, confirmText) {
+  return new Promise((resolve) => {
+    const overlay = document.getElementById("confirmOverlay");
+    const titleEl = document.getElementById("confirmTitle");
+    const msgEl = document.getElementById("confirmMessage");
+    const okBtn = document.getElementById("confirmOk");
+    const cancelBtn = document.getElementById("confirmCancel");
+    if (!overlay || !okBtn || !cancelBtn) {
+      resolve(window.confirm(message));
+      return;
+    }
+    titleEl.textContent = title;
+    msgEl.textContent = message;
+    okBtn.textContent = confirmText || "Potwierdź";
+    overlay.hidden = false;
+    const done = (result) => {
+      overlay.hidden = true;
+      okBtn.removeEventListener("click", onOk);
+      cancelBtn.removeEventListener("click", onCancel);
+      overlay.removeEventListener("click", onBackdrop);
+      resolve(result);
+    };
+    const onOk = () => done(true);
+    const onCancel = () => done(false);
+    const onBackdrop = (event) => {
+      if (event.target === overlay) done(false);
+    };
+    okBtn.addEventListener("click", onOk);
+    cancelBtn.addEventListener("click", onCancel);
+    overlay.addEventListener("click", onBackdrop);
+  });
+}
+
+function editDialog(currentText) {
+  return new Promise((resolve) => {
+    const overlay = document.getElementById("editOverlay");
+    const area = document.getElementById("editTextarea");
+    const okBtn = document.getElementById("editOk");
+    const cancelBtn = document.getElementById("editCancel");
+    if (!overlay || !area || !okBtn || !cancelBtn) {
+      resolve(window.prompt("Edytuj wiadomość:", currentText));
+      return;
+    }
+    area.value = currentText;
+    overlay.hidden = false;
+    setTimeout(() => {
+      area.focus();
+      area.setSelectionRange(area.value.length, area.value.length);
+    }, 60);
+    const done = (result) => {
+      overlay.hidden = true;
+      okBtn.removeEventListener("click", onOk);
+      cancelBtn.removeEventListener("click", onCancel);
+      overlay.removeEventListener("click", onBackdrop);
+      resolve(result);
+    };
+    const onOk = () => done(area.value);
+    const onCancel = () => done(null);
+    const onBackdrop = (event) => {
+      if (event.target === overlay) done(null);
+    };
+    okBtn.addEventListener("click", onOk);
+    cancelBtn.addEventListener("click", onCancel);
+    overlay.addEventListener("click", onBackdrop);
+  });
+}
 
 function openMemoryModal(conversationId) {
   const conversation = state.conversations.find((x) => x.id === conversationId);
@@ -1355,67 +1425,17 @@ if (elements.memoryRefresh) {
 
 if (elements.memoryClear) {
   elements.memoryClear.addEventListener("click", () => {
-    if (
-      window.confirm(
-        "Wyczyścić CAŁĄ pamięć Fabiana? Wszystkie rozmowy z tej przeglądarki znikną na zawsze."
-      )
-    ) {
+    confirmDialog(
+      "Wyczyścić całą pamięć?",
+      "Wszystkie rozmowy z tej przeglądarki znikną na zawsze.",
+      "Wyczyść"
+    ).then((yes) => {
+      if (!yes) return;
       clearAllChats();
       window.location.reload();
-    }
+    });
   });
 }
-
-elements.settingsBtn.addEventListener("click", openSettings);
-elements.settingsClose.addEventListener("click", closeSettingsModal);
-elements.settingsOverlay.addEventListener("click", (event) => {
-  if (event.target === elements.settingsOverlay) closeSettingsModal();
-});
-elements.settingsSave.addEventListener("click", () => {
-  settings = {
-    apiKey: elements.settingsApiKey.value.trim(),
-    baseUrl: elements.settingsBaseUrl.value.trim(),
-    name: elements.settingsName.value.trim().slice(0, 30),
-    personality: elements.settingsPersonality.value.trim().slice(0, 5000),
-    personaMode:
-      elements.settingsPersonaMode &&
-      elements.settingsPersonaMode.value === "replace"
-        ? "replace"
-        : "append",
-    model: elements.settingsModel ? elements.settingsModel.value : "groq/compound-mini",
-    botIcon: elements.settingsBotIcon ? validBaseUrl(elements.settingsBotIcon.value) : ""
-  };
-  if (!keyLooksValid(settings.apiKey)) settings.apiKey = "";
-  settings.baseUrl = validBaseUrl(settings.baseUrl);
-  if (
-    defaultPersonality &&
-    settings.personality.trim() === defaultPersonality.trim()
-  ) {
-    settings.personality = "";
-  }
-  persistSettings();
-  closeSettingsModal();
-  updateIdentity();
-  updateIndicators();
-});
-elements.settingsClear.addEventListener("click", () => {
-  settings = { apiKey: "", baseUrl: "", name: "", personality: "", personaMode: "append", model: "groq/compound-mini", botIcon: "" };
-  persistSettings();
-  elements.settingsApiKey.value = "";
-  elements.settingsBaseUrl.value = "";
-  elements.settingsName.value = "";
-  elements.settingsPersonality.value = "";
-  if (elements.settingsPersonaMode) elements.settingsPersonaMode.value = "append";
-  if (elements.settingsModel) elements.settingsModel.value = "groq/compound-mini";
-  if (elements.settingsBotIcon) elements.settingsBotIcon.value = "";
-  updateIdentity();
-});
-
-document.addEventListener("click", (event) => {
-  if (!event.target.closest(".chatMenu") && !event.target.closest(".sideMenuBtn")) {
-    closeMenu();
-  }
-});
 
 document.addEventListener("keydown", (event) => {
   if (event.key === "Escape") {
