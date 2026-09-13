@@ -9,6 +9,7 @@ import {
   sanitizeModel,
   sanitizeMemory,
   sanitizePersona,
+  sanitizeUserPersona,
   validateChatBody
 } from "../lib/validate.js";
 
@@ -117,6 +118,7 @@ export async function handleChat(req, res) {
 
   const model = sanitizeModel(body.model);
   const persona = sanitizePersona(body.persona);
+  const userPersona = sanitizeUserPersona(body.userPersona);
   const lastUserMsg = [...check.messages].reverse().find((m) => m.role === "user");
   const startedAt = Date.now();
   const auditBase = {
@@ -127,6 +129,7 @@ export async function handleChat(req, res) {
     msgs: check.messages.length,
     lastUser: lastUserMsg ? lastUserMsg.content.slice(0, 300) : "",
     attachments: Array.isArray(body.attachments) ? body.attachments.length : 0,
+    userPersona: userPersona ? userPersona.slice(0, 200) : "",
     messages: check.messages.map((m) => ({ role: m.role, content: m.content.slice(0, 2000) })),
     response: ""
   };
@@ -168,7 +171,8 @@ export async function handleChat(req, res) {
     const providerMessages = composeMessages(
       check.messages,
       attachments.slice(0, 12),
-      memory
+      memory,
+      userPersona
     );
     const lang = body.lang === "en" ? "en" : "pl";
     const stream = await streamChat(resolved.client, providerMessages, persona, model, lang);

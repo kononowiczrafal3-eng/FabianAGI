@@ -94,8 +94,25 @@ export function sanitizeMemory(raw) {
   return trimmed || null;
 }
 
-export function composeMessages(messages, attachments, memory) {
+export function sanitizeUserPersona(raw) {
+  if (typeof raw !== "string") return null;
+  const trimmed = raw.trim().slice(0, 1000);
+  return trimmed || null;
+}
+
+export function composeMessages(messages, attachments, memory, userPersona) {
   let result = messages;
+  if (userPersona) {
+    result = [
+      {
+        role: "user",
+        content:
+          "[Informacja o tobie, którą podał użytkownik - zapamiętaj i uwzględniaj]\n" +
+          userPersona
+      },
+      ...result
+    ];
+  }
   if (memory) {
     result = [
       {

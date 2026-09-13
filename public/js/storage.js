@@ -42,7 +42,8 @@ function isValidConversation(conversation) {
     typeof conversation.title === "string" &&
     Array.isArray(conversation.messages) &&
     conversation.messages.every(isValidMessage) &&
-    (conversation.memory === undefined || isValidMemory(conversation.memory))
+    (conversation.memory === undefined || isValidMemory(conversation.memory)) &&
+    (conversation.userPersona === undefined || typeof conversation.userPersona === "string")
   );
 }
 

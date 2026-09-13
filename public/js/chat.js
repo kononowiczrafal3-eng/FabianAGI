@@ -128,6 +128,7 @@ const elements = {
   memoryForget: document.getElementById("memoryForget"),
   memoryRefresh: document.getElementById("memoryRefresh"),
   convStats: document.getElementById("convStats"),
+  convUserPersona: document.getElementById("convUserPersona"),
   convMemoryText: document.getElementById("convMemoryText"),
   convMemoryUpdated: document.getElementById("convMemoryUpdated")
 };
@@ -1026,6 +1027,9 @@ function attachMessageActions(node, conversation, index) {
     addBtn("\u21bb", t("genAgain"), () => {
       regenerateFrom(conversation, index);
     });
+    addBtn("\ud83d\udd0a", "Odtwórz jako lektor", (event) => {
+      speakText(message.content, event.currentTarget);
+    });
   }
   if (message.role === "user") {
     addBtn("\u21a9", t("backToPointMsg"), () => {
@@ -1109,6 +1113,8 @@ async function streamFabian(apiMessages, attachments, memory, onDelta) {
   if (baseUrl) body.baseUrl = baseUrl;
   if (settings.model && settings.model !== "groq/compound-mini") body.model = settings.model;
   body.lang = uiLang === "en" ? "en" : "pl";
+  const activeConv = getActiveConversation(state);
+  if (activeConv && activeConv.userPersona) body.userPersona = activeConv.userPersona;
   if (settings.name.trim() || settings.personality.trim()) {
     body.persona = {
       name: settings.name.trim(),
@@ -1315,7 +1321,14 @@ async function handleFiles(fileList) {
   for (const file of files) {
     try {
       if (file.name.toLowerCase().endsWith(".zip")) {
-        if (file.size > 400 * 1024) continue;
+        if (file.size > 400 * 1024) {
+        alertDialog(
+          t("attach"),
+          (file.name || "file") + " - " + (uiLang === "en" ? "file too large (max 400 KB)." : "plik za duży (max 400 KB)."),
+          "OK"
+        );
+        continue;
+      }
         const buffer = await file.arrayBuffer();
         pendingAttachments.push({ name: file.name, zip: bufferToBase64(buffer) });
       } else {
@@ -1438,12 +1451,13 @@ menu.addEventListener("click", (event) => {
   }
   if (action === "rename") {
     const conversation = state.conversations.find((c) => c.id === menuTargetId);
-    const next = window.prompt("Nowa nazwa rozmowy:", conversation?.title || "");
-    if (next !== null) {
-      renameConversation(state, menuTargetId, next);
-      saveChats(state);
-      renderAll();
-    }
+    editDialog(conversation?.title || "").then((next) => {
+      if (next !== null) {
+        renameConversation(state, menuTargetId, next);
+        saveChats(state);
+        renderAll();
+      }
+    });
   }
   if (action === "delete") {
     confirmDialog(t("convDeleted"), t("convDeleteMsg"), t("del")).then(
@@ -1458,33 +1472,60 @@ menu.addEventListener("click", (event) => {
   closeMenu();
 });
 
-function confirmDialog(title, message, confirmText) {
+
+
+let fabDialogResolver = null;
+
+function fabDialogOpen(options) {
   return new Promise((resolve) => {
-    const overlay = document.getElementById("confirmOverlay");
-    const titleEl = document.getElementById("confirmTitle");
-    const msgEl = document.getElementById("confirmMessage");
-    const okBtn = document.getElementById("confirmOk");
-    const cancelBtn = document.getElementById("confirmCancel");
-    if (!overlay || !okBtn || !cancelBtn) {
-      resolve(window.confirm(message));
+    const overlay = document.getElementById("fabOverlay");
+    const modal = overlay ? overlay.querySelector(".fabModal") : null;
+    const icon = document.getElementById("fabDialogIcon");
+    const titleEl = document.getElementById("fabDialogTitle");
+    const msgEl = document.getElementById("fabDialogMessage");
+    const field = document.getElementById("fabDialogField");
+    const input = document.getElementById("fabDialogInput");
+    const okBtn = document.getElementById("fabDialogOk");
+    const cancelBtn = document.getElementById("fabDialogCancel");
+    if (!overlay || !modal || !okBtn || !cancelBtn) {
+      if (options.input) {
+        resolve(window.prompt(options.title, options.initial || ""));
+      } else if (options.info) {
+        window.alert(options.message);
+        resolve(true);
+      } else {
+        resolve(window.confirm(options.message));
+      }
       return;
     }
-    titleEl.textContent = title;
-    msgEl.textContent = message;
-    okBtn.textContent = confirmText || "Potwierdź";
+    fabDialogResolver = resolve;
+    modal.classList.remove("success", "info");
+    if (options.variant === "success") modal.classList.add("success");
+    if (options.variant === "info") modal.classList.add("info");
+    if (icon) icon.style.display = "";
+    titleEl.textContent = options.title || "";
+    msgEl.textContent = options.message || "";
+    okBtn.textContent = options.confirmText || "Potwierdź";
+    cancelBtn.textContent = options.cancelText || "Anuluj";
+    if (options.input) {
+      field.hidden = false;
+      input.value = options.initial || "";
+      setTimeout(() => { input.focus(); input.setSelectionRange(input.value.length, input.value.length); }, 60);
+    } else {
+      field.hidden = true;
+    }
     overlay.hidden = false;
-    const done = (result) => {
+    const done = (value) => {
       overlay.hidden = true;
       okBtn.removeEventListener("click", onOk);
       cancelBtn.removeEventListener("click", onCancel);
       overlay.removeEventListener("click", onBackdrop);
-      resolve(result);
+      fabDialogResolver = null;
+      resolve(value);
     };
-    const onOk = () => done(true);
-    const onCancel = () => done(false);
-    const onBackdrop = (event) => {
-      if (event.target === overlay) done(false);
-    };
+    const onOk = () => done(options.input ? input.value : true);
+    const onCancel = () => done(options.input ? null : false);
+    const onBackdrop = (event) => { if (event.target === overlay) done(options.input ? null : false); };
     okBtn.addEventListener("click", onOk);
     cancelBtn.addEventListener("click", onCancel);
     overlay.addEventListener("click", onBackdrop);
@@ -1492,36 +1533,32 @@ function confirmDialog(title, message, confirmText) {
 }
 
 function editDialog(currentText) {
-  return new Promise((resolve) => {
-    const overlay = document.getElementById("editOverlay");
-    const area = document.getElementById("editTextarea");
-    const okBtn = document.getElementById("editOk");
-    const cancelBtn = document.getElementById("editCancel");
-    if (!overlay || !area || !okBtn || !cancelBtn) {
-      resolve(window.prompt(t("editMsg") + ":", currentText));
-      return;
-    }
-    area.value = currentText;
-    overlay.hidden = false;
-    setTimeout(() => {
-      area.focus();
-      area.setSelectionRange(area.value.length, area.value.length);
-    }, 60);
-    const done = (result) => {
-      overlay.hidden = true;
-      okBtn.removeEventListener("click", onOk);
-      cancelBtn.removeEventListener("click", onCancel);
-      overlay.removeEventListener("click", onBackdrop);
-      resolve(result);
-    };
-    const onOk = () => done(area.value);
-    const onCancel = () => done(null);
-    const onBackdrop = (event) => {
-      if (event.target === overlay) done(null);
-    };
-    okBtn.addEventListener("click", onOk);
-    cancelBtn.addEventListener("click", onCancel);
-    overlay.addEventListener("click", onBackdrop);
+  return fabDialogOpen({
+    title: t("editMsg"),
+    message: "",
+    input: true,
+    initial: currentText,
+    confirmText: uiLang === "en" ? "Save" : "Zapisz",
+    variant: "info"
+  });
+}
+
+function confirmDialog(title, message, confirmText) {
+  return fabDialogOpen({
+    title: title,
+    message: message,
+    confirmText: confirmText,
+    variant: "danger"
+  });
+}
+
+function alertDialog(title, message, buttonText) {
+  return fabDialogOpen({
+    title: title,
+    message: message,
+    info: true,
+    confirmText: buttonText || "OK",
+    variant: "info"
   });
 }
 
@@ -1540,6 +1577,9 @@ function closeMemoryModal() {
 
 function renderMemoryModal(conversation) {
   if (!elements.convStats) return;
+  if (elements.convUserPersona) {
+    elements.convUserPersona.value = conversation.userPersona || "";
+  }
   const stats = [
     conversation.messages.length + " wiadomości",
     (conversation.memory ? conversation.memory.text.length : 0) + " znaków pamięci"
@@ -1562,6 +1602,61 @@ function renderMemoryModal(conversation) {
       "Fabian nie zapamiętał jeszcze tej rozmowy. Napisz kilkanaście wiadomości - sam zrobi skrót, albo kliknij \"Zapamiętaj teraz\".";
     elements.convMemoryUpdated.textContent = "";
     elements.memoryForget.disabled = true;
+  }
+}
+
+let ttsPlaying = false;
+
+function pcmToWav(pcmBytes, sampleRate) {
+  const data = new Uint8Array(pcmBytes);
+  const buffer = new ArrayBuffer(44 + data.length);
+  const view = new DataView(buffer);
+  const writeStr = (off, s) => { for (let i = 0; i < s.length; i++) view.setUint8(off + i, s.charCodeAt(i)); };
+  writeStr(0, "RIFF");
+  view.setUint32(4, 36 + data.length, true);
+  writeStr(8, "WAVE");
+  writeStr(12, "fmt ");
+  view.setUint32(16, 16, true);
+  view.setUint16(20, 1, true);
+  view.setUint16(22, 1, true);
+  view.setUint32(24, sampleRate, true);
+  view.setUint32(28, sampleRate * 2, true);
+  view.setUint16(32, 2, true);
+  view.setUint16(34, 16, true);
+  writeStr(36, "data");
+  view.setUint32(40, data.length, true);
+  new Uint8Array(buffer, 44).set(data);
+  return buffer;
+}
+
+async function speakText(text, button) {
+  if (ttsPlaying) return;
+  ttsPlaying = true;
+  if (button) button.classList.add("active");
+  try {
+    const response = await fetch("/api/speech", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text: text.slice(0, 4000) })
+    });
+    if (!response.ok) return;
+    const pcm = await response.arrayBuffer();
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const wav = pcmToWav(pcm, 24000);
+    const audio = await ctx.decodeAudioData(wav);
+    const source = ctx.createBufferSource();
+    source.buffer = audio;
+    source.connect(ctx.destination);
+    source.onended = () => { ctx.close().catch(() => {}); ttsPlaying = false; if (button) button.classList.remove("active"); };
+    source.start();
+  } catch {
+    ttsPlaying = false;
+    if (button) button.classList.remove("active");
+    alertDialog(
+      "Lektor / Narrator",
+      uiLang === "en" ? "The narrator could not play the response." : "Lektor nie mógł odtworzyć odpowiedzi.",
+      "OK"
+    );
   }
 }
 
@@ -1650,6 +1745,17 @@ if (elements.chatStatus) {
     if (elements.chatStatus.classList.contains("warn")) {
       elements.chatStatus.hidden = true;
     }
+  });
+}
+
+if (elements.convUserPersona) {
+  elements.convUserPersona.addEventListener("change", () => {
+    const conversation = state.conversations.find((x) => x.id === memoryTargetId);
+    if (!conversation) return;
+    conversation.userPersona = elements.convUserPersona.value.trim().slice(0, 1000);
+    conversation.updatedAt = Date.now();
+    saveChats(state);
+    renderSidebar();
   });
 }
 
@@ -1755,6 +1861,11 @@ if (elements.settingsSave) {
     applyUiLang();
     closeSettingsModal();
     updateIdentity();
+    alertDialog(
+      uiLang === "en" ? "Saved" : "Zapisano",
+      uiLang === "en" ? "Settings have been saved." : "Ustawienia zostały zapisane.",
+      "OK"
+    );
   });
 }
 if (elements.settingsClear) {
