@@ -29,6 +29,9 @@ function isValidMemory(memory) {
     memory &&
     typeof memory === "object" &&
     typeof memory.text === "string" &&
+    memory.text !== "[object Promise]" &&
+    memory.text !== "undefined" &&
+    memory.text !== "[object Object]" &&
     typeof memory.count === "number" &&
     typeof memory.updatedAt === "number" &&
     (memory.structured === undefined ||
@@ -59,6 +62,24 @@ function isValidState(data) {
   );
 }
 
+function normalizeState(data) {
+  if (!data || typeof data !== "object" || !Array.isArray(data.conversations)) {
+    return null;
+  }
+  const conversations = data.conversations
+    .filter((conversation) => conversation && typeof conversation === "object")
+    .map((conversation) => {
+      const normalized = { ...conversation };
+      if (!isValidMemory(normalized.memory)) delete normalized.memory;
+      return normalized;
+    })
+    .filter(isValidConversation);
+  const activeId = typeof data.activeId === "string" && conversations.some((c) => c.id === data.activeId)
+    ? data.activeId
+    : conversations[0]?.id ?? null;
+  return { version: 1, activeId, conversations };
+}
+
 function makeId() {
   if (typeof crypto !== "undefined" && crypto.randomUUID) {
     return crypto.randomUUID();
@@ -70,11 +91,9 @@ export function loadChats() {
   try {
     const raw = localStorage.getItem(storageKey);
     if (!raw) return emptyState();
-    const data = JSON.parse(raw);
-    if (!isValidState(data)) throw new Error("invalid shape");
-    if (data.activeId && !data.conversations.some((c) => c.id === data.activeId)) {
-      data.activeId = data.conversations[0]?.id ?? null;
-    }
+    const data = normalizeState(JSON.parse(raw));
+    if (!data || !isValidState(data)) throw new Error("invalid shape");
+    localStorage.setItem(storageKey, JSON.stringify(data));
     return data;
   } catch {
     try {
@@ -103,14 +122,15 @@ function pruneState(state) {
 }
 
 export function saveChats(state) {
+  const normalized = normalizeState(state) || emptyState();
   try {
-    localStorage.setItem(storageKey, JSON.stringify(state));
+    localStorage.setItem(storageKey, JSON.stringify(normalized));
     return "ok";
   } catch {
     /* przekroczony limit - probujemy z przycieta wersja */
   }
   try {
-    localStorage.setItem(storageKey, JSON.stringify(pruneState(state)));
+    localStorage.setItem(storageKey, JSON.stringify(pruneState(normalized)));
     console.warn("fabian_chats: zapisano przyciętą wersję rozmów (limit localStorage)");
     return "pruned";
   } catch {

@@ -8,7 +8,7 @@ import {
   saveChats,
   clearAllChats,
   setActiveConversation
-} from "/js/storage.js?v=1.6.1";
+} from "/js/storage.js?v=1.6.2";
 
 const uiStrings = {
   pl: {
@@ -1759,7 +1759,9 @@ async function speakText(text, button, silent) {
 
 function buildMemoryText(structured) {
   const lines = [];
-  if (structured.summary) lines.push(structured.summary);
+  if (typeof structured.summary === "string" && structured.summary.trim()) {
+    lines.push(structured.summary.trim());
+  }
   const sections = [
     ["important_facts", t("facts")], ["people", t("people")], ["preferences", t("preferences")],
     ["goals", t("goals")], ["decisions", t("decisions")], ["plans", t("plans")],
@@ -1767,7 +1769,9 @@ function buildMemoryText(structured) {
     ["unresolved_items", t("unresolved")], ["ongoing_context", t("ongoing")]
   ];
   for (const sec of sections) {
-    const items = structured[sec[0]];
+    const items = Array.isArray(structured[sec[0]])
+      ? structured[sec[0]].filter((item) => typeof item === "string" && item.trim())
+      : [];
     if (Array.isArray(items) && items.length) {
       lines.push("", sec[1] + ":");
       for (const item of items.slice(0, 15)) lines.push("- " + item);
