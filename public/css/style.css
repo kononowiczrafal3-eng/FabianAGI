@@ -1395,12 +1395,9 @@ code {
 .msgActionBtn.active { color: var(--orange); border-color: rgba(255, 106, 31, 0.6); }
 
 /* uniwersalny dialog (Uiverse, ciemny) */
-.fabModal { text-align: center; width: min(340px, 100%); padding: 24px 22px 20px; }
-.fabDialogIcon { width: 44px; height: 44px; margin: 0 auto 10px; display: block; color: var(--red); }
-.fabModal.success .fabDialogIcon { color: #3fb950; }
-.fabModal.info .fabDialogIcon { color: var(--orange); }
-.fabModal h2 { font-size: 18px; margin-bottom: 8px; }
-.fabDialogMsg { color: var(--text2); font-size: 13.5px; line-height: 1.6; margin-bottom: 20px; }
+.fabModal { text-align: center; width: min(300px, 92%); padding: 18px 18px 16px; }
+.fabModal.success .fabModal.info .fabModal h2 { font-size: 16px; margin-bottom: 6px; }
+.fabDialogMsg { color: var(--text2); font-size: 13px; line-height: 1.55; margin-bottom: 16px; }
 .fabDialogActions { display: flex; justify-content: center; gap: 10px; }
 .fabDialogOk { background: transparent; border: 1px solid var(--red); color: var(--red); transition: background 0.15s ease, color 0.15s ease; }
 .fabDialogOk:hover { background: var(--red); border-color: var(--red); color: #fff; }

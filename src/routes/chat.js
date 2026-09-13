@@ -281,8 +281,7 @@ export async function handleCompact(req, res) {
     const completion = await resolved.client.chat.completions.create({
       model: "groq/compound-mini",
       messages: [{ role: "system", content: COMPACT_SYSTEM }, ...slice],
-      stream: false,
-      max_completion_tokens: 1200
+      stream: false
     });
     const raw = completion?.choices?.[0]?.message?.content?.trim();
     const structured = parseCompactJson(raw);
@@ -292,7 +291,8 @@ export async function handleCompact(req, res) {
     }
     sendJson(res, 200, { summary: structured });
   } catch (err) {
-    console.error("COMPACT ERROR:", err && err.message ? err.message : "unknown");
+    const status = err && err.status ? err.status : "?";
+    console.error("COMPACT ERROR [" + status + "]:", err && err.message ? err.message : "unknown");
     sendJson(res, 502, { error: "Nie udało się zapamiętać. Spróbuj ponownie." });
   }
 }

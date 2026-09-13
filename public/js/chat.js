@@ -1483,7 +1483,6 @@ function fabDialogOpen(options) {
   return new Promise((resolve) => {
     const overlay = document.getElementById("fabOverlay");
     const modal = overlay ? overlay.querySelector(".fabModal") : null;
-    const icon = document.getElementById("fabDialogIcon");
     const titleEl = document.getElementById("fabDialogTitle");
     const msgEl = document.getElementById("fabDialogMessage");
     const field = document.getElementById("fabDialogField");
@@ -1505,7 +1504,6 @@ function fabDialogOpen(options) {
     modal.classList.remove("success", "info");
     if (options.variant === "success") modal.classList.add("success");
     if (options.variant === "info") modal.classList.add("info");
-    if (icon) icon.style.display = "";
     titleEl.textContent = options.title || "";
     msgEl.textContent = options.message || "";
     okBtn.textContent = options.confirmText || "Potwierdź";
