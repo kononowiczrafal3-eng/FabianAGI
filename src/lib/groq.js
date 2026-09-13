@@ -77,7 +77,7 @@ export function buildSystemPrompt(persona) {
   return parts.join("\n");
 }
 
-export function streamChat(client, messages, persona) {
+export function streamChat(client, messages, persona, model = "groq/compound-mini") {
   if (!Array.isArray(messages)) {
     throw new TypeError("messages must be an array");
   }
@@ -94,9 +94,8 @@ export function streamChat(client, messages, persona) {
       content: message.content.slice(0, 12000),
     }));
 
-  return client.chat.completions.create({
-    model: "groq/compound-mini",
-
+  const options = {
+    model,
     messages: [
       {
         role: "system",
@@ -104,17 +103,41 @@ export function streamChat(client, messages, persona) {
       },
       ...safeMessages,
     ],
+    stream: true
+  };
 
-    stream: true,
-
-    compound_custom: {
+  if (model.startsWith("groq/compound")) {
+    options.compound_custom = {
       tools: {
         enabled_tools: [
           "web_search",
           "code_interpreter",
           "visit_website",
         ],
-      },
-    },
+      }
+    };
+  }
+
+  if (model === "groq/compound") {
+    options.temperature = 1;
+    options.max_completion_tokens = 2048;
+    options.top_p = 1;
+  }
+
+  if (model.startsWith("qwen/")) {
+    options.temperature = 0.6;
+    options.max_completion_tokens = 2048;
+    options.top_p = 0.95;
+    options.reasoning_effort = "default";
+  }
+
+  return client.chat.completions.create(options);
+}
+
+export function transcribeAudio(client, audioBuffer, model) {
+  return client.audio.transcriptions.create({
+    file: new Blob([audioBuffer], { type: "audio/webm" }),
+    model,
+    temperature: 0
   });
 }

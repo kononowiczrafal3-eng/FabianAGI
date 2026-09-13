@@ -14,7 +14,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/css/style.css?v=1.6.1">
-  <script src="/js/chat.js?v=1.6.2" type="module"></script>
+  <script src="/js/chat.js?v=1.6.3" type="module"></script>
 </head>
 <body class="appMode">
   <header class="siteHeader">
@@ -107,6 +107,15 @@
             </button>
           </div>
           <p class="modalDesc">Możesz użyć własnego klucza API (Groq lub dowolne API zgodne z OpenAI). Imię i osobowość działają niezależnie od wybranego klucza.</p>
+          <div class="field">
+            <label for="settingsModel">Model</label>
+            <select id="settingsModel" class="fieldSelect">
+              <option value="groq/compound-mini">groq/compound-mini - domyślny, szybki</option>
+              <option value="groq/compound">groq/compound - pełny, z narzędziami</option>
+              <option value="qwen/qwen3.8-27b">qwen/qwen3.8-27b</option>
+            </select>
+          </div>
+
           <div class="field">
             <label for="settingsApiKey">Własny klucz API (opcjonalny)</label>
             <input type="password" id="settingsApiKey" placeholder="gsk_..." autocomplete="new-password" spellcheck="false">

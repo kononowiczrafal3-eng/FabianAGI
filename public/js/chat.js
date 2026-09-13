@@ -48,6 +48,7 @@ const elements = {
   emptyHeading: document.getElementById("emptyHeading"),
   composerHint: document.getElementById("composerHint"),
   chatStatus: document.getElementById("chatStatus"),
+  settingsModel: document.getElementById("settingsModel"),
   memoryClear: document.getElementById("memoryClear"),
   memoryOverlay: document.getElementById("memoryOverlay"),
   memoryModalClose: document.getElementById("memoryModalClose"),
@@ -74,7 +75,14 @@ function asCleanString(value) {
 }
 
 function loadSettings() {
-  const fallback = { apiKey: "", baseUrl: "", name: "", personality: "", personaMode: "append" };
+  const fallback = {
+    apiKey: "",
+    baseUrl: "",
+    name: "",
+    personality: "",
+    personaMode: "append",
+    model: "groq/compound-mini"
+  };
   try {
     const raw = localStorage.getItem(settingsKey);
     if (!raw) return fallback;
@@ -85,7 +93,8 @@ function loadSettings() {
       baseUrl: asCleanString(data.baseUrl),
       name: asCleanString(data.name),
       personality: asCleanString(data.personality),
-      personaMode: data.personaMode === "replace" ? "replace" : "append"
+      personaMode: data.personaMode === "replace" ? "replace" : "append",
+      model: typeof data.model === "string" ? data.model : "groq/compound-mini"
     };
   } catch {
     return fallback;
@@ -785,6 +794,7 @@ async function streamFabian(apiMessages, attachments, memory, onDelta) {
   if (keyLooksValid(settings.apiKey)) body.apiKey = settings.apiKey;
   const baseUrl = validBaseUrl(settings.baseUrl);
   if (baseUrl) body.baseUrl = baseUrl;
+  if (settings.model && settings.model !== "groq/compound-mini") body.model = settings.model;
   if (settings.name.trim() || settings.personality.trim()) {
     body.persona = {
       name: settings.name.trim(),
@@ -1204,6 +1214,9 @@ function openSettings() {
     elements.settingsPersonaMode.value =
       settings.personaMode === "replace" ? "replace" : "append";
   }
+  if (elements.settingsModel) {
+    elements.settingsModel.value = settings.model || "groq/compound-mini";
+  }
   elements.settingsOverlay.hidden = false;
 }
 
@@ -1275,7 +1288,8 @@ elements.settingsSave.addEventListener("click", () => {
       elements.settingsPersonaMode &&
       elements.settingsPersonaMode.value === "replace"
         ? "replace"
-        : "append"
+        : "append",
+    model: elements.settingsModel ? elements.settingsModel.value : "groq/compound-mini"
   };
   if (!keyLooksValid(settings.apiKey)) settings.apiKey = "";
   settings.baseUrl = validBaseUrl(settings.baseUrl);
@@ -1291,13 +1305,14 @@ elements.settingsSave.addEventListener("click", () => {
   updateIndicators();
 });
 elements.settingsClear.addEventListener("click", () => {
-  settings = { apiKey: "", baseUrl: "", name: "", personality: "", personaMode: "append" };
+  settings = { apiKey: "", baseUrl: "", name: "", personality: "", personaMode: "append", model: "groq/compound-mini" };
   persistSettings();
   elements.settingsApiKey.value = "";
   elements.settingsBaseUrl.value = "";
   elements.settingsName.value = "";
   elements.settingsPersonality.value = "";
   if (elements.settingsPersonaMode) elements.settingsPersonaMode.value = "append";
+  if (elements.settingsModel) elements.settingsModel.value = "groq/compound-mini";
   updateIdentity();
 });
 

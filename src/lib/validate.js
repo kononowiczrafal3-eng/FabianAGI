@@ -116,3 +116,20 @@ export function composeMessages(messages, attachments, memory) {
   }
   return [...result.slice(0, -1), { role: "user", content: parts.join("\n") }];
 }
+
+const chatModels = new Set([
+  "groq/compound-mini",
+  "groq/compound",
+  "qwen/qwen3.8-27b"
+]);
+const transcriptionModels = new Set(["whisper-large-v3-turbo", "whisper-large-v3"]);
+
+export function sanitizeModel(raw) {
+  return chatModels.has(raw) ? raw : "groq/compound-mini";
+}
+
+export function sanitizeTranscriptionModel(raw) {
+  return transcriptionModels.has(raw) ? raw : "whisper-large-v3-turbo";
+}
+
+export const maxAudioBase64Chars = 8_000_000;

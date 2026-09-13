@@ -5,6 +5,7 @@ import {
   composeMessages,
   limits,
   sanitizeAttachments,
+  sanitizeModel,
   sanitizeMemory,
   sanitizePersona,
   validateChatBody
@@ -144,7 +145,8 @@ export async function handleChat(req, res) {
       attachments.slice(0, 12),
       memory
     );
-    const stream = await streamChat(resolved.client, providerMessages, persona);
+    const model = sanitizeModel(body.model);
+    const stream = await streamChat(resolved.client, providerMessages, persona, model);
     for await (const chunk of stream) {
       const delta = chunk?.choices?.[0]?.delta?.content ?? "";
       if (delta) {
