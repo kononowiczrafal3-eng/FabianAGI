@@ -83,7 +83,7 @@ export function buildSystemPrompt(persona) {
   return parts.join("\n");
 }
 
-export function streamChat(client, messages, persona, model = "groq/compound-mini") {
+export function streamChat(client, messages, persona, model = "groq/compound-mini", lang = "pl") {
   if (!Array.isArray(messages)) {
     throw new TypeError("messages must be an array");
   }
@@ -100,12 +100,16 @@ export function streamChat(client, messages, persona, model = "groq/compound-min
       content: message.content.slice(0, 12000),
     }));
 
+  const langDirective =
+    lang === "en"
+      ? "\nLANGUAGE: the user has selected English as the interface language. Respond in English unless the user explicitly writes to you in another language."
+      : "\nJĘZYK: użytkownik wybrał polski jako język interfejsu. Odpowiadaj po polsku, chyba że użytkownik wyraźnie pisze do Ciebie w innym języku.";
   const options = {
     model,
     messages: [
       {
         role: "system",
-        content: buildSystemPrompt(persona),
+        content: buildSystemPrompt(persona) + langDirective,
       },
       ...safeMessages,
     ],

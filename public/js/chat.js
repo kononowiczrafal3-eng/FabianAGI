@@ -1108,6 +1108,7 @@ async function streamFabian(apiMessages, attachments, memory, onDelta) {
   const baseUrl = validBaseUrl(settings.baseUrl);
   if (baseUrl) body.baseUrl = baseUrl;
   if (settings.model && settings.model !== "groq/compound-mini") body.model = settings.model;
+  body.lang = uiLang === "en" ? "en" : "pl";
   if (settings.name.trim() || settings.personality.trim()) {
     body.persona = {
       name: settings.name.trim(),
@@ -1604,12 +1605,17 @@ async function compactConversation(conversation, showStatus) {
   }
 }
 
+const compactAttempts = new Map();
+
 function maybeAutoCompact(conversation) {
   if (!conversation) return;
   const total = conversation.messages.length;
   if (total < 15) return;
   const mem = conversation.memory;
   if (mem && total - mem.count < 15) return;
+  const last = compactAttempts.get(conversation.id) || 0;
+  if (Date.now() - last < 5 * 60 * 1000) return;
+  compactAttempts.set(conversation.id, Date.now());
   compactConversation(conversation, false);
 }
 

@@ -170,7 +170,8 @@ export async function handleChat(req, res) {
       attachments.slice(0, 12),
       memory
     );
-    const stream = await streamChat(resolved.client, providerMessages, persona, model);
+    const lang = body.lang === "en" ? "en" : "pl";
+    const stream = await streamChat(resolved.client, providerMessages, persona, model, lang);
     let responseText = "";
     for await (const chunk of stream) {
       const delta = chunk?.choices?.[0]?.delta?.content ?? "";
@@ -234,7 +235,7 @@ export async function handleCompact(req, res) {
         ...slice
       ],
       stream: false,
-      max_tokens: 600
+      max_completion_tokens: 600
     });
     const summary = completion?.choices?.[0]?.message?.content?.trim();
     if (!summary) {
