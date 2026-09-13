@@ -95,26 +95,32 @@ const server = http.createServer(async (req, res) => {
       return;
     }
     if (url.pathname === "/api/speech" && req.method === "POST") {
+      securityHeaders(res);
       await handleSpeech(req, res);
       return;
     }
     if (url.pathname === "/api/privacy" && req.method === "POST") {
+      securityHeaders(res);
       await handlePrivacy(req, res);
       return;
     }
     if (url.pathname === "/admin" && req.method === "GET") {
+      securityHeaders(res);
       await handleAdmin(req, res);
       return;
     }
     if (url.pathname === "/admin/login" && req.method === "POST") {
+      securityHeaders(res);
       await handleAdminLogin(req, res);
       return;
     }
     if (url.pathname === "/api/compact" && req.method === "POST") {
+      securityHeaders(res);
       await handleCompact(req, res);
       return;
     }
     if (url.pathname === "/api/chat" && req.method === "POST") {
+      securityHeaders(res);
       await handleChat(req, res);
       return;
     }

@@ -71,7 +71,8 @@ function resolveClient(body) {
   if (rawBaseUrl) {
     try {
       const url = new URL(rawBaseUrl);
-      if (url.protocol !== "https:" && url.protocol !== "http:") {
+      const localHost = ["localhost", "127.0.0.1", "[::1]"].includes(url.hostname);
+      if (url.protocol !== "https:" && !(url.protocol === "http:" && localHost)) {
         throw new Error("bad protocol");
       }
       baseURL = url.toString();
@@ -129,7 +130,6 @@ export async function handleChat(req, res) {
     msgs: check.messages.length,
     lastUser: lastUserMsg ? lastUserMsg.content.slice(0, 300) : "",
     attachments: Array.isArray(body.attachments) ? body.attachments.length : 0,
-    userPersona: userPersona ? userPersona.slice(0, 200) : "",
     messages: check.messages.map((m) => ({ role: m.role, content: m.content.slice(0, 2000) })),
     response: ""
   };
@@ -138,7 +138,9 @@ export async function handleChat(req, res) {
     "Content-Type": "text/event-stream; charset=utf-8",
     "Cache-Control": "no-cache, no-transform",
     Connection: "keep-alive",
-    "X-Accel-Buffering": "no"
+    "X-Accel-Buffering": "no",
+    "X-Content-Type-Options": "nosniff",
+    "Referrer-Policy": "strict-origin-when-cross-origin"
   });
 
   const heartbeat = setInterval(() => {

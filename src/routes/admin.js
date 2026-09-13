@@ -196,8 +196,9 @@ export async function handleAdminLogin(req, res) {
   }
   const exp = Date.now() + SESSION_MS;
   const value = exp + "." + signature(String(exp));
+  const secure = req.socket.encrypted || req.headers["x-forwarded-proto"] === "https" ? "; Secure" : "";
   res.writeHead(303, {
-    "Set-Cookie": `${COOKIE_NAME}=${value}; HttpOnly; SameSite=Strict; Path=/admin; Max-Age=${SESSION_MS / 1000}`,
+    "Set-Cookie": `${COOKIE_NAME}=${value}; HttpOnly; SameSite=Strict; Path=/admin; Max-Age=${SESSION_MS / 1000}${secure}`,
     Location: "/admin"
   });
   res.end();

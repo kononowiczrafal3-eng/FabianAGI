@@ -334,7 +334,8 @@ function validBaseUrl(raw) {
   if (typeof raw !== "string" || !raw.trim()) return "";
   try {
     const url = new URL(raw.trim());
-    if (url.protocol !== "https:" && url.protocol !== "http:") return "";
+    const localHost = ["localhost", "127.0.0.1", "[::1]"].includes(url.hostname);
+    if (url.protocol !== "https:" && !(url.protocol === "http:" && localHost)) return "";
     return url.toString();
   } catch {
     return "";
@@ -1357,7 +1358,11 @@ function handleSend() {
 
   const userMessage = addMessage(state, conversation.id, "user", messageContent);
   if (sentAttachments.length) {
-    userMessage.attachments = sentAttachments.map((att) => ({ name: att.name }));
+    userMessage.attachments = sentAttachments.map((att) => ({
+      name: att.name,
+      ...(typeof att.content === "string" ? { content: att.content } : {}),
+      ...(typeof att.zip === "string" ? { zip: att.zip } : {})
+    }));
   }
   if (saveChats(state) === "pruned") {
     setWarnStatus(t("pruneWarn"));
@@ -2045,6 +2050,11 @@ window.addEventListener("fabian-toggle-lang", () => {
   uiLang = settings.lang;
   applyUiLang();
   updateIdentity();
+});
+
+window.addEventListener("beforeunload", () => {
+  saveChats(state);
+  persistSettings();
 });
 
 renderAll();
