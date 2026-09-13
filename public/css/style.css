@@ -1216,3 +1216,10 @@ code {
   .confirmActions { flex-direction: column-reverse; }
   .confirmActions .btn { width: 100%; }
 }
+
+/* efekt typewriter */
+.msgText.typing::after {
+  content: "\258D";
+  color: var(--orange);
+  animation: dotPulse 0.9s steps(1) infinite;
+}

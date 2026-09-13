@@ -454,7 +454,11 @@ function renderMarkdown(source) {
   };
 
   let i = 0;
+  let guard = 0;
+  const guardMax = lines.length + 50;
   while (i < lines.length) {
+    guard += 1;
+    if (guard > guardMax) break;
     const line = lines[i];
     if (line.trim().startsWith("```")) {
       flushParagraph();
@@ -535,6 +539,7 @@ function renderMarkdown(source) {
       closeList();
       const level = heading[1].length + 1;
       html += "<h" + level + ">" + formatInline(heading[2]) + "</h" + level + ">";
+      i += 1;
       continue;
     }
     const ul = trimmed.match(/^[-*]\s+(.*)$/);
@@ -767,10 +772,62 @@ function extractFileBlocksCached(text) {
   return parsed;
 }
 
-function finalizeAssistant(textEl, full) {
-  const parsed = extractFileBlocksCached(full);
+function typewriterReveal(el, maxDuration) {
+  const duration = maxDuration || 900;
+  return new Promise((resolve) => {
+    if (
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches ||
+      typeof NodeFilter === "undefined"
+    ) {
+      resolve();
+      return;
+    }
+    const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+    const targets = [];
+    let node;
+    while ((node = walker.nextNode())) {
+      if (node.textContent.trim()) targets.push({ node: node, full: node.textContent });
+    }
+    const total = targets.reduce((sum, t) => sum + t.full.length, 0);
+    if (!total || total > 4000) {
+      resolve();
+      return;
+    }
+    for (const t of targets) t.node.textContent = "";
+    el.classList.add("typing");
+    const charsPerTick = Math.max(3, Math.ceil(total / (duration / 16)));
+    const timer = setInterval(() => {
+      let budget = charsPerTick;
+      while (budget > 0 && targets.length) {
+        const t = targets[0];
+        const take = Math.min(budget, t.full.length - t.node.textContent.length);
+        t.node.textContent = t.full.slice(0, t.node.textContent.length + take);
+        budget -= take;
+        if (t.node.textContent.length >= t.full.length) targets.shift();
+      }
+      updateScroll();
+      if (!targets.length) {
+        clearInterval(timer);
+        el.classList.remove("typing");
+        resolve();
+      }
+    }, 16);
+  });
+}
+
+function finalizeAssistant(textEl, full, animate) {
+  let parsed;
+  let html;
+  try {
+    parsed = extractFileBlocksCached(full);
+    html = renderMarkdownCached(parsed.cleaned || full);
+  } catch {
+    parsed = { files: [] };
+    html = "<p>" + escapeHtml(full).replace(/\n/g, "<br>") + "</p>";
+  }
   textEl.className = "msgText md";
-  textEl.innerHTML = renderMarkdownCached(parsed.cleaned || full);
+  textEl.innerHTML = html;
+  const reveal = animate ? typewriterReveal(textEl) : Promise.resolve();
   if (parsed.files.length) {
     const wrap = document.createElement("div");
     wrap.className = "msgFiles";
@@ -810,6 +867,7 @@ function finalizeAssistant(textEl, full) {
     });
     pre.appendChild(copyBtn);
   }
+  return reveal;
 }
 
 function attachMessageActions(node, conversation, index) {
@@ -1015,7 +1073,7 @@ async function requestAssistant(conversation, textEl, node, attachments) {
     if (!full.trim()) throw new Error("empty");
     addMessage(state, conversation.id, "assistant", full);
     saveChats(state);
-    finalizeAssistant(textEl, full);
+    await finalizeAssistant(textEl, full, true);
     scrollNow();
     maybeAutoCompact(conversation);
   } catch {
