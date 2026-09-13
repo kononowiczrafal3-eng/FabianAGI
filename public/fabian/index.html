@@ -178,6 +178,17 @@
             <label for="settingsPersonality" data-i18n="personalityLabel">Własna osobowość (opcjonalnie)</label>
             <textarea id="settingsPersonality" rows="4" maxlength="5000" placeholder="Np. Lubisz stary rock i zawsze masz przy sobie termos z herbatą. Nie znosisz poniedziałków." data-i18n-attr-placeholder="personalityPlaceholder"></textarea>
           </div>
+          <div class="personaLibrary">
+            <h3 class="settingsGroupTitle" data-i18n="savedPersonasTitle">Zapisane persony asystenta</h3>
+            <div class="personaLibraryRow">
+              <input type="text" id="settingsPersonaTitle" maxlength="40" placeholder="Nazwa zapisanej persony" data-i18n-attr-placeholder="savedPersonaNamePlaceholder" autocomplete="off">
+              <button class="btn btnSecondary btnSm" id="settingsPersonaSave" type="button" data-i18n="savePersona">Zapisz personę</button>
+            </div>
+            <select id="settingsPersonaList" class="fieldSelect" aria-label="Zapisane persony" data-i18n-attr-aria-label="savedPersonasTitle">
+              <option value="" data-i18n="noSavedPersonas">Brak zapisanych person</option>
+            </select>
+            <button class="btn btnSecondary btnSm personaDeleteBtn" id="settingsPersonaDelete" type="button" data-i18n="deletePersona">Usuń wybraną personę</button>
+          </div>
           <div class="settingsGroup">
             <h3 class="settingsGroupTitle" data-i18n="dataTitle">Dane</h3>
             <p class="modalNote" style="margin-bottom:10px" data-i18n="dataDesc">Wszystkie rozmowy z tej przeglądarki. Klucz API i persona zostają.</p>
@@ -236,6 +247,20 @@
           <div class="field">
             <label for="convUserPersona" data-i18n="userPersonaLabel">Kim jesteś (persona użytkownika, opcjonalnie)</label>
             <textarea id="convUserPersona" rows="2" maxlength="1000" placeholder="Np. Mam na imię Adam, jestem studentem, lubię konkretne odpowiedzi." data-i18n-attr-placeholder="userPersonaPlaceholder"></textarea>
+          </div>
+          <div class="personaLibrary memoryPersonaLibrary">
+            <h3 class="settingsGroupTitle" data-i18n="savedUserPersonasTitle">Zapisane persony użytkownika</h3>
+            <div class="personaLibraryRow">
+              <select id="userPersonaList" class="fieldSelect" aria-label="Zapisane persony użytkownika" data-i18n-attr-aria-label="savedUserPersonasTitle">
+                <option value="" data-i18n="noSavedUserPersonas">Brak zapisanych person</option>
+              </select>
+              <button class="btn btnSecondary btnSm" id="userPersonaUse" type="button" data-i18n="usePersona">Użyj</button>
+            </div>
+            <div class="personaLibraryRow">
+              <input type="text" id="userPersonaTitle" maxlength="40" placeholder="Nazwa zapisanej persony" data-i18n-attr-placeholder="savedPersonaNamePlaceholder" autocomplete="off">
+              <button class="btn btnSecondary btnSm" id="userPersonaSave" type="button" data-i18n="savePersona">Zapisz personę</button>
+              <button class="btn btnSecondary btnSm" id="userPersonaDelete" type="button" data-i18n="deletePersona">Usuń</button>
+            </div>
           </div>
           <div class="memoryBox" id="convMemoryText" data-i18n="noMemory">Fabian nie zapamiętał jeszcze tej rozmowy. Napisz kilkanaście wiadomości - sam zrobi skrót.</div>
           <p class="memoryUpdated mono" id="convMemoryUpdated"></p>

@@ -656,7 +656,7 @@ code {
 .hero {
   background-image:
     linear-gradient(rgba(15, 15, 17, 0.35), rgba(15, 15, 17, 0.55)),
-    url("https://tse1.mm.bing.net/th/id/OIP.f0atB44I63Al13TU5lAafgHaE7?r=0&rs=1&pid=ImgDetMain&o=7&rm=3");
+    url("https://media2.giphy.com/media/v1.Y2lkPTc5MGI3NjExN2N6Zm95bW1haHQ0cTV4N3BtZ2Q3ZXZyZG1jYmh6NmZ3NHRka242ZSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/BpksBW3dg81KAvXL2T/giphy.gif");
   background-size: cover;
   background-position: center;
 }
@@ -1421,6 +1421,28 @@ code {
 }
 .settingsToggleText span { color: var(--text3); }
 .settingsToggleRow .switch { display: inline-flex; flex: none; margin: 0; cursor: pointer; }
+.personaLibrary {
+  display: grid;
+  gap: 8px;
+  margin: 4px 0 18px;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+.personaLibraryRow {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.personaLibraryRow input,
+.personaLibraryRow select { min-width: 0; flex: 1; }
+.personaDeleteBtn { justify-self: start; }
+.memoryPersonaLibrary { margin-top: 0; }
+@media (max-width: 560px) {
+  .personaLibraryRow { align-items: stretch; flex-direction: column; }
+  .personaLibraryRow .btn { width: 100%; }
+}
 .switch input { position: absolute; opacity: 0; pointer-events: none; }
 .slider {
   display: block;

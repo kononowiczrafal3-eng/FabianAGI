@@ -70,6 +70,14 @@ const uiStrings = {
     newConvTitle: "Nowa rozmowa",
     ownKey: "Własny klucz API aktywny",
     persona: "Persona"
+    ,savedPersonasTitle: "Zapisane persony asystenta"
+    ,savedUserPersonasTitle: "Zapisane persony użytkownika"
+    ,savePersona: "Zapisz personę"
+    ,deletePersona: "Usuń"
+    ,usePersona: "Użyj"
+    ,noSavedPersonas: "Brak zapisanych person"
+    ,noSavedUserPersonas: "Brak zapisanych person"
+    ,savedPersonaNamePlaceholder: "Nazwa zapisanej persony"
   },
   en: {
     homeLabel: "FabianAGI - home page", mainNavigation: "Main navigation", menuToggle: "Toggle menu",
@@ -130,6 +138,14 @@ const uiStrings = {
     newConvTitle: "New conversation",
     ownKey: "Custom API key active",
     persona: "Persona"
+    ,savedPersonasTitle: "Saved assistant personas"
+    ,savedUserPersonasTitle: "Saved user personas"
+    ,savePersona: "Save persona"
+    ,deletePersona: "Delete"
+    ,usePersona: "Use"
+    ,noSavedPersonas: "No saved personas"
+    ,noSavedUserPersonas: "No saved personas"
+    ,savedPersonaNamePlaceholder: "Saved persona name"
   }
 };
 
@@ -170,6 +186,10 @@ const elements = {
   settingsBaseUrl: document.getElementById("settingsBaseUrl"),
   settingsName: document.getElementById("settingsName"),
   settingsPersonality: document.getElementById("settingsPersonality"),
+  settingsPersonaTitle: document.getElementById("settingsPersonaTitle"),
+  settingsPersonaSave: document.getElementById("settingsPersonaSave"),
+  settingsPersonaList: document.getElementById("settingsPersonaList"),
+  settingsPersonaDelete: document.getElementById("settingsPersonaDelete"),
   settingsPersonaMode: document.getElementById("settingsPersonaMode"),
   emptyHeading: document.getElementById("emptyHeading"),
   composerHint: document.getElementById("composerHint"),
@@ -183,6 +203,11 @@ const elements = {
   memoryRefresh: document.getElementById("memoryRefresh"),
   convStats: document.getElementById("convStats"),
   convUserPersona: document.getElementById("convUserPersona"),
+  userPersonaList: document.getElementById("userPersonaList"),
+  userPersonaUse: document.getElementById("userPersonaUse"),
+  userPersonaTitle: document.getElementById("userPersonaTitle"),
+  userPersonaSave: document.getElementById("userPersonaSave"),
+  userPersonaDelete: document.getElementById("userPersonaDelete"),
   convMemoryText: document.getElementById("convMemoryText"),
   convMemoryUpdated: document.getElementById("convMemoryUpdated")
 };
@@ -213,7 +238,9 @@ function loadSettings() {
     botIcon: "",
     lang: "pl",
     voice: "autumn",
-    autoTts: false
+    autoTts: false,
+    assistantPersonas: [],
+    userPersonas: []
   };
   try {
     const raw = localStorage.getItem(settingsKey);
@@ -230,11 +257,39 @@ function loadSettings() {
       botIcon: asCleanString(data.botIcon),
       lang: data.lang === "en" ? "en" : "pl",
       voice: typeof data.voice === "string" ? data.voice : "autumn",
-      autoTts: data.autoTts === true
+      autoTts: data.autoTts === true,
+      assistantPersonas: normalizeAssistantPersonas(data.assistantPersonas),
+      userPersonas: normalizeUserPersonas(data.userPersonas)
     };
   } catch {
     return fallback;
   }
+}
+
+function normalizeAssistantPersonas(value) {
+  if (!Array.isArray(value)) return [];
+  return value
+    .filter((item) => item && typeof item === "object")
+    .map((item) => ({
+      title: asCleanString(item.title).slice(0, 40),
+      name: asCleanString(item.name).slice(0, 30),
+      personality: asCleanString(item.personality).slice(0, 5000),
+      mode: item.mode === "replace" ? "replace" : "append"
+    }))
+    .filter((item) => item.title && (item.name || item.personality))
+    .slice(0, 30);
+}
+
+function normalizeUserPersonas(value) {
+  if (!Array.isArray(value)) return [];
+  return value
+    .filter((item) => item && typeof item === "object")
+    .map((item) => ({
+      title: asCleanString(item.title).slice(0, 40),
+      text: asCleanString(item.text).slice(0, 1000)
+    }))
+    .filter((item) => item.title && item.text)
+    .slice(0, 30);
 }
 
 
@@ -319,6 +374,112 @@ function persistSettings() {
   } catch {
     console.warn("fabian_settings: zapis do localStorage nie powiódł się");
   }
+}
+
+function renderAssistantPersonaList() {
+  if (!elements.settingsPersonaList) return;
+  const selected = elements.settingsPersonaList.value;
+  elements.settingsPersonaList.innerHTML = "";
+  if (!settings.assistantPersonas.length) {
+    const option = document.createElement("option");
+    option.value = "";
+    option.textContent = t("noSavedPersonas");
+    elements.settingsPersonaList.appendChild(option);
+    if (elements.settingsPersonaDelete) elements.settingsPersonaDelete.disabled = true;
+    return;
+  }
+  settings.assistantPersonas.forEach((persona, index) => {
+    const option = document.createElement("option");
+    option.value = String(index);
+    option.textContent = persona.title;
+    elements.settingsPersonaList.appendChild(option);
+  });
+  elements.settingsPersonaList.value = settings.assistantPersonas[selected]
+    ? selected
+    : "0";
+  if (elements.settingsPersonaDelete) elements.settingsPersonaDelete.disabled = false;
+}
+
+function renderUserPersonaList(conversation) {
+  if (!elements.userPersonaList) return;
+  const selected = elements.userPersonaList.value;
+  elements.userPersonaList.innerHTML = "";
+  if (!settings.userPersonas.length) {
+    const option = document.createElement("option");
+    option.value = "";
+    option.textContent = t("noSavedUserPersonas");
+    elements.userPersonaList.appendChild(option);
+    if (elements.userPersonaUse) elements.userPersonaUse.disabled = true;
+    if (elements.userPersonaDelete) elements.userPersonaDelete.disabled = true;
+    return;
+  }
+  settings.userPersonas.forEach((persona, index) => {
+    const option = document.createElement("option");
+    option.value = String(index);
+    option.textContent = persona.title;
+    elements.userPersonaList.appendChild(option);
+  });
+  elements.userPersonaList.value = settings.userPersonas[selected] ? selected : "0";
+  if (elements.userPersonaUse) elements.userPersonaUse.disabled = !conversation;
+  if (elements.userPersonaDelete) elements.userPersonaDelete.disabled = false;
+}
+
+function saveAssistantPersona() {
+  const name = elements.settingsName.value.trim().slice(0, 30);
+  const personality = elements.settingsPersonality.value.trim().slice(0, 5000);
+  if (!name && !personality) return;
+  const title = (elements.settingsPersonaTitle.value.trim() || name || personality.slice(0, 40)).slice(0, 40);
+  const persona = {
+    title,
+    name,
+    personality,
+    mode: elements.settingsPersonaMode.value === "replace" ? "replace" : "append"
+  };
+  const existing = settings.assistantPersonas.findIndex((item) => item.title === title);
+  if (existing >= 0) settings.assistantPersonas[existing] = persona;
+  else settings.assistantPersonas.unshift(persona);
+  persistSettings();
+  renderAssistantPersonaList();
+  elements.settingsPersonaTitle.value = "";
+}
+
+function useAssistantPersona() {
+  const index = Number(elements.settingsPersonaList.value);
+  const persona = settings.assistantPersonas[index];
+  if (!persona) return;
+  elements.settingsName.value = persona.name;
+  elements.settingsPersonality.value = persona.personality;
+  elements.settingsPersonaMode.value = persona.mode;
+}
+
+function saveUserPersona() {
+  const conversation = state.conversations.find((item) => item.id === memoryTargetId);
+  const text = elements.convUserPersona.value.trim().slice(0, 1000);
+  if (!conversation || !text) return;
+  const fallbackTitle = text.replace(/\s+/g, " ").slice(0, 40);
+  const title = (elements.userPersonaTitle.value.trim() || fallbackTitle).slice(0, 40);
+  const persona = { title, text };
+  const existing = settings.userPersonas.findIndex((item) => item.title === title);
+  if (existing >= 0) settings.userPersonas[existing] = persona;
+  else settings.userPersonas.unshift(persona);
+  conversation.userPersona = text;
+  conversation.updatedAt = Date.now();
+  persistSettings();
+  saveChats(state);
+  renderUserPersonaList(conversation);
+  renderSidebar();
+  elements.userPersonaTitle.value = "";
+}
+
+function useUserPersona() {
+  const conversation = state.conversations.find((item) => item.id === memoryTargetId);
+  const persona = settings.userPersonas[Number(elements.userPersonaList.value)];
+  if (!conversation || !persona) return;
+  conversation.userPersona = persona.text;
+  conversation.updatedAt = Date.now();
+  elements.convUserPersona.value = persona.text;
+  saveChats(state);
+  renderSidebar();
 }
 
 function assistantName() {
@@ -1672,6 +1833,7 @@ function usableMemoryText(value) {
 
 function renderMemoryModal(conversation) {
   if (!elements.convStats) return;
+  renderUserPersonaList(conversation);
   if (elements.convUserPersona) {
     elements.convUserPersona.value = conversation.userPersona || "";
   }
@@ -1878,6 +2040,7 @@ function openSettings() {
   if (elements.settingsAutoTts) {
     elements.settingsAutoTts.checked = settings.autoTts === true;
   }
+  renderAssistantPersonaList();
   elements.settingsOverlay.hidden = false;
 }
 
@@ -1901,6 +2064,38 @@ if (elements.convUserPersona) {
     conversation.updatedAt = Date.now();
     saveChats(state);
     renderSidebar();
+    renderUserPersonaList(conversation);
+  });
+}
+
+if (elements.settingsPersonaSave) {
+  elements.settingsPersonaSave.addEventListener("click", saveAssistantPersona);
+}
+if (elements.settingsPersonaList) {
+  elements.settingsPersonaList.addEventListener("change", useAssistantPersona);
+}
+if (elements.settingsPersonaDelete) {
+  elements.settingsPersonaDelete.addEventListener("click", () => {
+    const index = Number(elements.settingsPersonaList.value);
+    if (!settings.assistantPersonas[index]) return;
+    settings.assistantPersonas.splice(index, 1);
+    persistSettings();
+    renderAssistantPersonaList();
+  });
+}
+if (elements.userPersonaUse) {
+  elements.userPersonaUse.addEventListener("click", useUserPersona);
+}
+if (elements.userPersonaSave) {
+  elements.userPersonaSave.addEventListener("click", saveUserPersona);
+}
+if (elements.userPersonaDelete) {
+  elements.userPersonaDelete.addEventListener("click", () => {
+    const index = Number(elements.userPersonaList.value);
+    if (!settings.userPersonas[index]) return;
+    settings.userPersonas.splice(index, 1);
+    persistSettings();
+    renderUserPersonaList(state.conversations.find((item) => item.id === memoryTargetId));
   });
 }
 
@@ -1993,7 +2188,9 @@ if (elements.settingsSave) {
       botIcon: elements.settingsBotIcon ? validBaseUrl(elements.settingsBotIcon.value) : "",
       lang: elements.settingsLang && elements.settingsLang.value === "en" ? "en" : "pl",
       voice: elements.settingsVoice ? elements.settingsVoice.value : "autumn",
-      autoTts: elements.settingsAutoTts ? elements.settingsAutoTts.checked : false
+      autoTts: elements.settingsAutoTts ? elements.settingsAutoTts.checked : false,
+      assistantPersonas: settings.assistantPersonas,
+      userPersonas: settings.userPersonas
     };
     if (!keyLooksValid(settings.apiKey)) settings.apiKey = "";
     settings.baseUrl = validBaseUrl(settings.baseUrl);
@@ -2017,7 +2214,7 @@ if (elements.settingsSave) {
 }
 if (elements.settingsClear) {
   elements.settingsClear.addEventListener("click", () => {
-    settings = { apiKey: "", baseUrl: "", name: "", personality: "", personaMode: "append", model: "groq/compound-mini", botIcon: "", lang: "pl", voice: "autumn", autoTts: false };
+    settings = { apiKey: "", baseUrl: "", name: "", personality: "", personaMode: "append", model: "groq/compound-mini", botIcon: "", lang: "pl", voice: "autumn", autoTts: false, assistantPersonas: settings.assistantPersonas, userPersonas: settings.userPersonas };
     persistSettings();
     elements.settingsApiKey.value = "";
     elements.settingsBaseUrl.value = "";
