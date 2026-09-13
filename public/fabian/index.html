@@ -3,12 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Fabian Asystent AGI</title>
-  <meta name="description" content="Porozmawiaj z Fabianem, asystentem AI FabianAGI do pracy z tekstem, kodem, analizą i codziennymi zadaniami.">
+  <title id="pageTitle">Fabian Asystent AGI</title>
+  <meta id="pageDescription" name="description" content="Porozmawiaj z Fabianem, asystentem AI FabianAGI do pracy z tekstem, kodem, analizą i codziennymi zadaniami.">
   <link rel="canonical" href="https://fabianagi.dev/fabian">
   <meta property="og:type" content="website">
-  <meta property="og:title" content="Fabian - Asystent AI | FabianAGI">
-  <meta property="og:description" content="Porozmawiaj z Fabianem, asystentem AI FabianAGI do pracy z tekstem, kodem, analizą i codziennymi zadaniami.">
+  <meta id="ogTitle" property="og:title" content="Fabian - Asystent AI | FabianAGI">
+  <meta id="ogDescription" property="og:description" content="Porozmawiaj z Fabianem, asystentem AI FabianAGI do pracy z tekstem, kodem, analizą i codziennymi zadaniami.">
   <meta property="og:url" content="https://fabianagi.dev/fabian">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -21,25 +21,25 @@
 <body class="appMode">
   <header class="siteHeader">
     <div class="container navWrap">
-      <a class="brand" href="/" aria-label="FabianAGI - strona główna">
+      <a class="brand" href="/" aria-label="FabianAGI - strona główna" data-i18n-attr-aria-label="homeLabel">
         <span class="brandMark"><img src="https://media.discordapp.net/attachments/1274546962389274769/1352462103876866199/attachment-1.gif?ex=6aa6acbd&is=6aa55b3d&hm=3418edee7632d8e2f233b7d0db9146fa0fe9ec4f67c7a018937b0368478b7def&=" alt="" width="20" height="20"></span>
         <span class="brandName">FabianAGI</span>
       </a>
-      <nav class="mainNav" id="mainNav" aria-label="Nawigacja główna">
-        <a href="/">Zaczynajmy</a>
-        <a href="/fabian" class="active" aria-current="page">Fabian</a>
-        <a href="/wyniki">Wyniki</a>
-        <a href="/prywatnosc">Prywatność</a>
+      <nav class="mainNav" id="mainNav" aria-label="Nawigacja główna" data-i18n-attr-aria-label="mainNavigation">
+        <a href="/" data-i18n="navStart">Zaczynajmy</a>
+        <a href="/fabian" class="active" aria-current="page" data-i18n="navFabian">Fabian</a>
+        <a href="/wyniki" data-i18n="navResults">Wyniki</a>
+        <a href="/prywatnosc" data-i18n="navPrivacy">Prywatność</a>
       </nav>
-      <button class="navToggle" id="navToggle" aria-label="Przełącz menu" aria-expanded="false"><span></span><span></span><span></span></button>
+      <button class="navToggle" id="navToggle" aria-label="Przełącz menu" data-i18n-attr-aria-label="menuToggle" aria-expanded="false"><span></span><span></span><span></span></button>
     </div>
   </header>
     <main class="appMain">
   <div class="container crumbsWrap">
-      <nav class="crumbs" aria-label="Okruszki nawigacji">
+      <nav class="crumbs" aria-label="Okruszki nawigacji" data-i18n-attr-aria-label="breadcrumbs">
         <a href="/">FabianAGI</a>
         <span class="crumbSep" aria-hidden="true">/</span>
-        <span aria-current="page">Fabian</span>
+        <span aria-current="page" data-i18n="navFabian">Fabian</span>
       </nav>
     </div>
       <div class="chatApp">
@@ -49,7 +49,7 @@
               <svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M7.75 2a.75.75 0 0 1 .75.75V7h4.25a.75.75 0 0 1 0 1.5H8.5v4.25a.75.75 0 0 1-1.5 0V8.5H2.75a.75.75 0 0 1 0-1.5H7V2.75A.75.75 0 0 1 7.75 2z"/></svg><span id="newChatLabel">Nowa rozmowa</span>
             </button>
           </div>
-          <nav class="sideList" id="sideList" aria-label="Historia rozmów"></nav>
+          <nav class="sideList" id="sideList" aria-label="Historia rozmów" data-i18n-attr-aria-label="history"></nav>
         </aside>
         <div class="sideOverlay" id="sideOverlay"></div>
 
@@ -85,7 +85,7 @@
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M7.75 2a.75.75 0 0 1 .75.75V7h4.25a.75.75 0 0 1 0 1.5H8.5v4.25a.75.75 0 0 1-1.5 0V8.5H2.75a.75.75 0 0 1 0-1.5H7V2.75A.75.75 0 0 1 7.75 2z"/></svg>
               </button>
               <input type="file" id="fileInput" hidden multiple accept=".txt,.md,.markdown,.csv,.json,.log,.xml,.html,.htm,.js,.ts,.css,.py,.yml,.yaml,.ini,.toml,.sh,.sql,.rtf,.zip">
-              <label class="srOnly" for="composerInput">Wiadomość do asystenta</label>
+              <label class="srOnly" for="composerInput" data-i18n="userMessage">Wiadomość do asystenta</label>
               <textarea id="composerInput" rows="1" maxlength="10000" placeholder="Napisz wiadomość… (powyżej 500 znaków wyśle się jako plik)"></textarea>
               <button class="sendBtn" id="sendBtn" type="submit" aria-label="Wyślij wiadomość">
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M1.72 1.72a.75.75 0 0 1 1.06-.03l11.5 10.5a.75.75 0 0 1-.43 1.36H8.24l-2.1 4.4a.75.75 0 0 1-1.36-.06L1.69 2.78a.75.75 0 0 1 .03-1.06z"/></svg>
@@ -102,20 +102,28 @@
       <div class="modalOverlay" id="settingsOverlay" hidden>
         <div class="modal" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
           <div class="modalHead">
-            <h2 id="settingsTitle">Ustawienia</h2>
-            <button class="iconBtn" id="settingsClose" type="button" aria-label="Zamknij ustawienia">
+            <h2 id="settingsTitle" data-i18n="settingsTitle">Ustawienia</h2>
+            <button class="iconBtn" id="settingsClose" type="button" aria-label="Zamknij ustawienia" data-i18n-attr-aria-label="settingsClose">
               <svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M3.72 3.72a.75.75 0 0 1 1.06 0L8 6.94l3.22-3.22a.75.75 0 1 1 1.06 1.06L9.06 8l3.22 3.22a.75.75 0 1 1-1.06 1.06L8 9.06l-3.22 3.22a.75.75 0 0 1-1.06-1.06L6.94 8 3.72 4.78a.75.75 0 0 1 0-1.06z"/></svg>
             </button>
           </div>
-          <p class="modalDesc">Możesz użyć własnego klucza API (Groq lub dowolne API zgodne z OpenAI). Imię i osobowość działają niezależnie od wybranego klucza.</p>
+          <p class="modalDesc" data-i18n="settingsDesc">Możesz użyć własnego klucza API (Groq lub dowolne API zgodne z OpenAI). Imię i osobowość działają niezależnie od wybranego klucza.</p>
           <div class="field">
-            <label class="checkRow" for="settingsAutoTts">
-              <input type="checkbox" id="settingsAutoTts">
-              <span>Auto-narrator: czytaj odpowiedzi AI na głos / auto-narrate AI responses</span>
-            </label>
+            <div class="settingsToggleRow">
+              <label class="switch" for="settingsAutoTts" aria-label="Auto-narrator">
+                <input type="checkbox" id="settingsAutoTts">
+                <span class="slider">
+                  <span class="circle">
+                    <svg class="cross" viewBox="0 0 365.696 365.696" aria-hidden="true"><path d="M243.188 182.86 356.32 69.726c12.5-12.5 12.5-32.766 0-45.247L341.238 9.398c-12.504-12.503-32.77-12.503-45.25 0L182.86 122.528 69.727 9.374c-12.5-12.5-32.766-12.5-45.247 0L9.375 24.457c-12.503 12.504-12.503 32.77 0 45.25l113.152 113.152L9.398 295.99c-12.503 12.503-12.503 32.769 0 45.25L24.48 356.32c12.5 12.5 32.766 12.5 45.247 0l113.132-113.132L295.99 356.32c12.503 12.503 32.769 12.503 45.25 0l15.081-15.082c12.5-12.504 12.5-32.77 0-45.25z"></path></svg>
+                    <svg class="checkmark" viewBox="0 0 24 24" aria-hidden="true"><path d="M9.707 19.121a.997.997 0 0 1-1.414 0l-5.646-5.647a1.5 1.5 0 0 1 0-2.121l.707-.707a1.5 1.5 0 0 1 2.121 0L9 14.171l9.525-9.525a1.5 1.5 0 0 1 2.121 0l.707.707a1.5 1.5 0 0 1 0 2.121z"></path></svg>
+                  </span>
+                </span>
+              </label>
+              <span class="settingsToggleText" data-i18n="autoTts">Auto-narrator: czytaj odpowiedzi AI na głos</span>
+            </div>
           </div>
           <div class="field">
-            <label for="settingsVoice">Głos lektora / Narrator voice</label>
+            <label for="settingsVoice" data-i18n="voiceLabel">Głos lektora / Narrator voice</label>
             <select id="settingsVoice" class="fieldSelect">
               <option value="autumn">autumn</option>
               <option value="diana">diana</option>
@@ -126,10 +134,10 @@
             </select>
           </div>
           <div class="field">
-            <label for="settingsModel">Model</label>
+            <label for="settingsModel" data-i18n="modelLabel">Model</label>
             <select id="settingsModel" class="fieldSelect">
-              <option value="groq/compound-mini">groq/compound-mini - domyślny, szybki</option>
-              <option value="groq/compound">groq/compound - pełny, z narzędziami</option>
+              <option value="groq/compound-mini" data-i18n="modelMini">groq/compound-mini - domyślny, szybki</option>
+              <option value="groq/compound" data-i18n="modelCompound">groq/compound - pełny, z narzędziami</option>
               <option value="qwen/qwen3.8-27b">qwen/qwen3.8-27b</option>
               <option value="openai/gpt-oss-120b">openai/gpt-oss-120b</option>
               <option value="openai/gpt-oss">openai/gpt-oss</option>
@@ -137,79 +145,79 @@
           </div>
 
           <div class="field">
-            <label for="settingsApiKey">Własny klucz API (opcjonalny)</label>
-            <input type="password" id="settingsApiKey" placeholder="gsk_..." autocomplete="new-password" spellcheck="false">
+            <label for="settingsApiKey" data-i18n="apiKeyLabel">Własny klucz API (opcjonalny)</label>
+            <input type="password" id="settingsApiKey" placeholder="gsk_..." data-i18n-attr-placeholder="settingsApiPlaceholder" autocomplete="new-password" spellcheck="false">
           </div>
           <div class="field">
-            <label for="settingsBaseUrl">Adres API (opcjonalnie)</label>
-            <input type="url" id="settingsBaseUrl" placeholder="https://api.groq.com/openai/v1" autocomplete="off" spellcheck="false">
+            <label for="settingsBaseUrl" data-i18n="baseUrlLabel">Adres API (opcjonalnie)</label>
+            <input type="url" id="settingsBaseUrl" placeholder="https://api.groq.com/openai/v1" data-i18n-attr-placeholder="baseUrlPlaceholder" autocomplete="off" spellcheck="false">
           </div>
           <div class="field">
-            <label for="settingsName">Imię asystenta</label>
-            <input type="text" id="settingsName" placeholder="Fabian" maxlength="30" autocomplete="off" spellcheck="false">
+            <label for="settingsName" data-i18n="assistantNameLabel">Imię asystenta</label>
+            <input type="text" id="settingsName" placeholder="Fabian" data-i18n-attr-placeholder="assistantPlaceholder" maxlength="30" autocomplete="off" spellcheck="false">
           </div>
           <div class="field">
-            <label for="settingsLang">Język / Language</label>
+            <label for="settingsLang" data-i18n="languageLabel">Język / Language</label>
             <select id="settingsLang" class="fieldSelect">
-              <option value="pl">Polski</option>
-              <option value="en">English</option>
+              <option value="pl" data-i18n="polish">Polski</option>
+              <option value="en" data-i18n="english">English</option>
             </select>
           </div>
           <div class="field">
-            <label for="settingsBotIcon">Ikona bota (URL, opcjonalnie)</label>
-            <input type="url" id="settingsBotIcon" placeholder="https://twoja-domena.pl/ikona.png" autocomplete="off" spellcheck="false">
+            <label for="settingsBotIcon" data-i18n="botIconLabel">Ikona bota (URL, opcjonalnie)</label>
+            <input type="url" id="settingsBotIcon" placeholder="https://twoja-domena.pl/ikona.png" data-i18n-attr-placeholder="botIconPlaceholder" autocomplete="off" spellcheck="false">
           </div>
           <div class="field">
-            <label for="settingsPersonaMode">Tryb persony</label>
+            <label for="settingsPersonaMode" data-i18n="personaModeLabel">Tryb persony</label>
             <select id="settingsPersonaMode" class="fieldSelect">
-              <option value="append">Dopisz do domyślnej (zalecane)</option>
-              <option value="replace">Zamień całkowicie</option>
+              <option value="append" data-i18n="personaAppend">Dopisz do domyślnej (zalecane)</option>
+              <option value="replace" data-i18n="personaReplace">Zamień całkowicie</option>
             </select>
           </div>
           <div class="field">
-            <label for="settingsPersonality">Własna osobowość (opcjonalnie)</label>
-            <textarea id="settingsPersonality" rows="4" maxlength="5000" placeholder="Np. Lubisz stary rock i zawsze masz przy sobie termos z herbatą. Nie znosisz poniedziałków."></textarea>
+            <label for="settingsPersonality" data-i18n="personalityLabel">Własna osobowość (opcjonalnie)</label>
+            <textarea id="settingsPersonality" rows="4" maxlength="5000" placeholder="Np. Lubisz stary rock i zawsze masz przy sobie termos z herbatą. Nie znosisz poniedziałków." data-i18n-attr-placeholder="personalityPlaceholder"></textarea>
           </div>
           <div class="settingsGroup">
-            <h3 class="settingsGroupTitle">Dane</h3>
-            <p class="modalNote" style="margin-bottom:10px">Wszystkie rozmowy z tej przeglądarki. Klucz API i persona zostają.</p>
-            <button class="btn btnSecondary btnSm" id="memoryClear" type="button">Usuń wszystkie rozmowy</button>
+            <h3 class="settingsGroupTitle" data-i18n="dataTitle">Dane</h3>
+            <p class="modalNote" style="margin-bottom:10px" data-i18n="dataDesc">Wszystkie rozmowy z tej przeglądarki. Klucz API i persona zostają.</p>
+            <button class="btn btnSecondary btnSm" id="memoryClear" type="button" data-i18n="clearChats">Usuń wszystkie rozmowy</button>
           </div>
 
-          <p class="modalNote">Klucz i persona przechowywane są wyłącznie w Twojej przeglądarce. Klucz wysyłamy tylko do wybranego API, a personę do modelu wraz z zapytaniem.</p>
+          <p class="modalNote" data-i18n="privacyNote">Klucz i persona przechowywane są wyłącznie w Twojej przeglądarce. Klucz wysyłamy tylko do wybranego API, a personę do modelu wraz z zapytaniem.</p>
           <div class="modalActions">
-            <button class="btn btnSecondary" id="settingsClear" type="button">Wyczyść</button>
-            <button class="btn btnPrimary" id="settingsSave" type="button">Zapisz</button>
+            <button class="btn btnSecondary" id="settingsClear" type="button" data-i18n="clear">Wyczyść</button>
+            <button class="btn btnPrimary" id="settingsSave" type="button" data-i18n="save">Zapisz</button>
           </div>
         </div>
       </div>
 
       <div class="modalOverlay" id="previewOverlay" hidden>
-        <div class="modal modalPreview" role="dialog" aria-modal="true" aria-label="Podgląd wygenerowanej strony">
+        <div class="modal modalPreview" role="dialog" aria-modal="true" aria-label="Podgląd wygenerowanej strony" data-i18n-attr-aria-label="previewFrame">
           <div class="modalHead">
-            <h2 id="previewTitle">Podgląd</h2>
-            <button class="iconBtn" id="previewClose" type="button" aria-label="Zamknij podgląd">
+            <h2 id="previewTitle" data-i18n="preview">Podgląd</h2>
+            <button class="iconBtn" id="previewClose" type="button" aria-label="Zamknij podgląd" data-i18n-attr-aria-label="previewClose">
               <svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M3.72 3.72a.75.75 0 0 1 1.06 0L8 6.94l3.22-3.22a.75.75 0 1 1 1.06 1.06L9.06 8l3.22 3.22a.75.75 0 1 1-1.06 1.06L8 9.06l-3.22 3.22a.75.75 0 0 1-1.06-1.06L6.94 8 3.72 4.78a.75.75 0 0 1 0-1.06z"/></svg>
             </button>
           </div>
           <div class="previewToolbar">
-            <button class="previewModeBtn active" id="previewDesktop" type="button">Desktop</button>
-            <button class="previewModeBtn" id="previewMobile" type="button">Mobile 390px</button>
+            <button class="previewModeBtn active" id="previewDesktop" type="button" data-i18n="desktop">Desktop</button>
+            <button class="previewModeBtn" id="previewMobile" type="button" data-i18n="mobile">Mobile 390px</button>
           </div>
-          <iframe class="previewFrame" id="previewFrame" sandbox="allow-scripts" title="Podgląd wygenerowanej strony"></iframe>
+          <iframe class="previewFrame" id="previewFrame" sandbox="allow-scripts" title="Podgląd wygenerowanej strony" data-i18n-attr-title="previewFrame"></iframe>
         </div>
       </div>
 
       <div class="modalOverlay" id="fabOverlay" hidden>
         <div class="modal fabModal" role="alertdialog" aria-modal="true" aria-labelledby="fabDialogTitle">
-          <h2 id="fabDialogTitle">Na pewno?</h2>
+          <h2 id="fabDialogTitle" data-i18n="areYouSure">Na pewno?</h2>
           <p class="fabDialogMsg" id="fabDialogMessage"></p>
           <div class="field" id="fabDialogField" hidden>
             <textarea id="fabDialogInput" rows="5" maxlength="12000"></textarea>
           </div>
           <div class="fabDialogActions">
-            <button class="btn btnSecondary" id="fabDialogCancel" type="button">Anuluj</button>
-            <button class="btn fabDialogOk danger" id="fabDialogOk" type="button">Potwierdź</button>
+            <button class="btn btnSecondary" id="fabDialogCancel" type="button" data-i18n="cancel">Anuluj</button>
+            <button class="btn fabDialogOk danger" id="fabDialogOk" type="button" data-i18n="confirm">Potwierdź</button>
           </div>
         </div>
       </div>
@@ -217,22 +225,22 @@
       <div class="modalOverlay" id="memoryOverlay" hidden>
         <div class="modal" role="dialog" aria-modal="true" aria-labelledby="memoryModalTitle">
           <div class="modalHead">
-            <h2 id="memoryModalTitle">Pamięć rozmowy</h2>
-            <button class="iconBtn" id="memoryModalClose" type="button" aria-label="Zamknij pamięć rozmowy">
+            <h2 id="memoryModalTitle" data-i18n="memoryTitle">Pamięć rozmowy</h2>
+            <button class="iconBtn" id="memoryModalClose" type="button" aria-label="Zamknij pamięć rozmowy" data-i18n-attr-aria-label="memoryClose">
               <svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M3.72 3.72a.75.75 0 0 1 1.06 0L8 6.94l3.22-3.22a.75.75 0 1 1 1.06 1.06L9.06 8l3.22 3.22a.75.75 0 1 1-1.06 1.06L8 9.06l-3.22 3.22a.75.75 0 0 1-1.06-1.06L6.94 8 3.72 4.78a.75.75 0 0 1 0-1.06z"/></svg>
             </button>
           </div>
-          <p class="modalDesc">Co kilkanaście wiadomości Fabian sam skraca rozmowę do zwięzłego skrótu i trzyma go w pamięci - dzięki temu pamięta, o czym gadaliście, nawet gdy historia się dłuży.</p>
+          <p class="modalDesc" data-i18n="memoryDesc">Co kilkanaście wiadomości Fabian sam skraca rozmowę do zwięzłego skrótu i trzyma go w pamięci - dzięki temu pamięta, o czym gadaliście, nawet gdy historia się dłuży.</p>
           <div class="convStats" id="convStats"></div>
           <div class="field">
-            <label for="convUserPersona">Kim jesteś (persona użytkownika, opcjonalnie)</label>
-            <textarea id="convUserPersona" rows="2" maxlength="1000" placeholder="Np. Mam na imię Adam, jestem studentem, lubię konkretne odpowiedzi."></textarea>
+            <label for="convUserPersona" data-i18n="userPersonaLabel">Kim jesteś (persona użytkownika, opcjonalnie)</label>
+            <textarea id="convUserPersona" rows="2" maxlength="1000" placeholder="Np. Mam na imię Adam, jestem studentem, lubię konkretne odpowiedzi." data-i18n-attr-placeholder="userPersonaPlaceholder"></textarea>
           </div>
-          <div class="memoryBox" id="convMemoryText">Fabian nie zapamiętał jeszcze tej rozmowy. Napisz kilkanaście wiadomości - sam zrobi skrót.</div>
+          <div class="memoryBox" id="convMemoryText" data-i18n="noMemory">Fabian nie zapamiętał jeszcze tej rozmowy. Napisz kilkanaście wiadomości - sam zrobi skrót.</div>
           <p class="memoryUpdated mono" id="convMemoryUpdated"></p>
           <div class="modalActions">
-            <button class="btn btnSecondary" id="memoryForget" type="button">Wyczyść pamięć</button>
-            <button class="btn btnPrimary" id="memoryRefresh" type="button">Zapamiętaj teraz</button>
+            <button class="btn btnSecondary" id="memoryForget" type="button" data-i18n="forgetMemory">Wyczyść pamięć</button>
+            <button class="btn btnPrimary" id="memoryRefresh" type="button" data-i18n="rememberNow">Zapamiętaj teraz</button>
           </div>
         </div>
       </div>

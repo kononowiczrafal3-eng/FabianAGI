@@ -12,6 +12,32 @@ import {
 
 const uiStrings = {
   pl: {
+    homeLabel: "FabianAGI - strona główna", mainNavigation: "Nawigacja główna", menuToggle: "Przełącz menu",
+    navStart: "Zaczynajmy", navFabian: "Fabian", navResults: "Wyniki", navPrivacy: "Prywatność",
+    breadcrumbs: "Okruszki nawigacji", history: "Historia rozmów",
+    settingsTitle: "Ustawienia", settingsDesc: "Możesz użyć własnego klucza API (Groq lub dowolne API zgodne z OpenAI). Imię i osobowość działają niezależnie od wybranego klucza.",
+    autoTts: "Auto-narrator: czytaj odpowiedzi AI na głos / auto-narrate AI responses", voiceLabel: "Głos lektora / Narrator voice", modelLabel: "Model",
+    modelMini: "groq/compound-mini - domyślny, szybki", modelCompound: "groq/compound - pełny, z narzędziami",
+    apiKeyLabel: "Własny klucz API (opcjonalny)", baseUrlLabel: "Adres API (opcjonalnie)", assistantNameLabel: "Imię asystenta",
+    languageLabel: "Język / Language", polish: "Polski", english: "English", botIconLabel: "Ikona bota (URL, opcjonalnie)",
+    personaModeLabel: "Tryb persony", personaAppend: "Dopisz do domyślnej (zalecane)", personaReplace: "Zamień całkowicie",
+    personalityLabel: "Własna osobowość (opcjonalnie)", dataTitle: "Dane", dataDesc: "Wszystkie rozmowy z tej przeglądarki. Klucz API i persona zostają.",
+    clearChats: "Usuń wszystkie rozmowy", privacyNote: "Klucz i persona przechowywane są wyłącznie w Twojej przeglądarce. Klucz wysyłamy tylko do wybranego API, a personę do modelu wraz z zapytaniem.",
+    clear: "Wyczyść", save: "Zapisz", preview: "Podgląd", desktop: "Desktop", mobile: "Mobile 390px",
+    areYouSure: "Na pewno?", cancel: "Anuluj", confirm: "Potwierdź", memoryTitle: "Pamięć rozmowy",
+    memoryDesc: "Co kilkanaście wiadomości Fabian sam skraca rozmowę do zwięzłego skrótu i trzyma go w pamięci - dzięki temu pamięta, o czym gadaliście, nawet gdy historia się dłuży.",
+    userPersonaLabel: "Kim jesteś (persona użytkownika, opcjonalnie)", forgetMemory: "Wyczyść pamięć", rememberNow: "Zapamiętaj teraz",
+    settingsClose: "Zamknij ustawienia", previewClose: "Zamknij podgląd", memoryClose: "Zamknij pamięć rozmowy",
+    previewFrame: "Podgląd wygenerowanej strony", userMessage: "Wiadomość do asystenta",
+    settingsApiPlaceholder: "gsk_...", baseUrlPlaceholder: "https://api.groq.com/openai/v1", assistantPlaceholder: "Fabian",
+    botIconPlaceholder: "https://twoja-domena.pl/ikona.png", personalityPlaceholder: "Np. Lubisz stary rock i zawsze masz przy sobie termos z herbatą. Nie znosisz poniedziałków.",
+    userPersonaPlaceholder: "Np. Mam na imię Adam, jestem studentem, lubię konkretne odpowiedzi.",
+    filePreview: "Podgląd", download: "Pobierz", project: "Projekt", files: "plików", pagePreview: "Podgląd strony", downloadZip: "Pobierz ZIP",
+    removeAttachment: "Usuń załącznik", narrator: "Odtwórz jako lektor", responseError: "Błąd", tooLarge: "plik za duży (maks. 400 KB).",
+    memoryMessages: "wiadomości", memoryCharacters: "znaków pamięci", memoryUpdated: "Zaktualizowano", afterMessages: "po", people: "osoby", goals: "cele", decisions: "decyzje",
+    facts: "Fakty", preferences: "Preferencje", plans: "Plany", dates: "Daty", constraints: "Ograniczenia", unresolved: "Nierozwiązane", ongoing: "Bieżące",
+    noMemory: "Fabian nie zapamiętał jeszcze tej rozmowy. Napisz kilkanaście wiadomości - sam zrobi skrót, albo kliknij \"Zapamiętaj teraz\".",
+    narratorError: "Lektor nie mógł odtworzyć odpowiedzi.", saveMemoryError: "Nie udało się zapamiętać rozmowy. Spróbuj ponownie.", saved: "Zapisano", settingsSaved: "Ustawienia zostały zapisane.",
     emptyHeading: "Cześć, jestem {name}.",
     emptySub: "Pytaj o cokolwiek.",
     placeholder: "Napisz wiadomość…",
@@ -46,6 +72,32 @@ const uiStrings = {
     persona: "Persona"
   },
   en: {
+    homeLabel: "FabianAGI - home page", mainNavigation: "Main navigation", menuToggle: "Toggle menu",
+    navStart: "Get started", navFabian: "Fabian", navResults: "Results", navPrivacy: "Privacy",
+    breadcrumbs: "Breadcrumbs", history: "Conversation history",
+    settingsTitle: "Settings", settingsDesc: "Use your own API key (Groq or any OpenAI-compatible API). The name and personality work independently of the selected key.",
+    autoTts: "Auto-narrator: read AI responses aloud", voiceLabel: "Narrator voice", modelLabel: "Model",
+    modelMini: "groq/compound-mini - default, fast", modelCompound: "groq/compound - full, with tools",
+    apiKeyLabel: "Custom API key (optional)", baseUrlLabel: "API address (optional)", assistantNameLabel: "Assistant name",
+    languageLabel: "Language", polish: "Polish", english: "English", botIconLabel: "Bot icon (URL, optional)",
+    personaModeLabel: "Persona mode", personaAppend: "Append to default (recommended)", personaReplace: "Replace completely",
+    personalityLabel: "Custom personality (optional)", dataTitle: "Data", dataDesc: "All conversations in this browser. Your API key and persona are kept.",
+    clearChats: "Delete all conversations", privacyNote: "Your key and persona are stored only in your browser. The key is sent only to the selected API, and the persona is sent to the model with your request.",
+    clear: "Clear", save: "Save", preview: "Preview", desktop: "Desktop", mobile: "Mobile 390px",
+    areYouSure: "Are you sure?", cancel: "Cancel", confirm: "Confirm", memoryTitle: "Conversation memory",
+    memoryDesc: "Every few messages Fabian condenses the conversation into a short summary and keeps it in memory, so he remembers what you discussed even when the history gets long.",
+    userPersonaLabel: "Who are you (optional user persona)", forgetMemory: "Clear memory", rememberNow: "Remember now",
+    settingsClose: "Close settings", previewClose: "Close preview", memoryClose: "Close conversation memory",
+    previewFrame: "Preview of generated page", userMessage: "Message for the assistant",
+    settingsApiPlaceholder: "gsk_...", baseUrlPlaceholder: "https://api.groq.com/openai/v1", assistantPlaceholder: "Fabian",
+    botIconPlaceholder: "https://your-domain.com/icon.png", personalityPlaceholder: "For example: You like classic rock and always carry a thermos of tea. You dislike Mondays.",
+    userPersonaPlaceholder: "For example: My name is Adam, I am a student, and I prefer concise answers.",
+    filePreview: "Preview", download: "Download", project: "Project", files: "files", pagePreview: "Page preview", downloadZip: "Download ZIP",
+    removeAttachment: "Remove attachment", narrator: "Play as narrator", responseError: "Error", tooLarge: "file too large (max 400 KB).",
+    memoryMessages: "messages", memoryCharacters: "memory characters", memoryUpdated: "Updated", afterMessages: "after", people: "people", goals: "goals", decisions: "decisions",
+    facts: "Important facts", preferences: "Preferences", plans: "Plans", dates: "Dates", constraints: "Constraints", unresolved: "Unresolved", ongoing: "Ongoing",
+    noMemory: "Fabian has not remembered this conversation yet. Write a few more messages and he will summarize it, or click \"Remember now\".",
+    narratorError: "The narrator could not play the response.", saveMemoryError: "Could not save the memory. Try again.", saved: "Saved", settingsSaved: "Settings have been saved.",
     emptyHeading: "Hi, I am {name}.",
     emptySub: "Ask me anything.",
     placeholder: "Type a message…",
@@ -200,6 +252,30 @@ function t(key) {
 }
 
 function applyUiLang() {
+  document.querySelectorAll("[data-i18n]").forEach((node) => {
+    node.textContent = t(node.dataset.i18n);
+  });
+  document.querySelectorAll("[data-i18n-attr-aria-label]").forEach((node) => {
+    node.setAttribute("aria-label", t(node.dataset.i18nAttrAriaLabel));
+  });
+  document.querySelectorAll("[data-i18n-attr-placeholder]").forEach((node) => {
+    node.setAttribute("placeholder", t(node.dataset.i18nAttrPlaceholder));
+  });
+  document.querySelectorAll("[data-i18n-attr-title]").forEach((node) => {
+    node.setAttribute("title", t(node.dataset.i18nAttrTitle));
+  });
+  document.documentElement.lang = uiLang === "en" ? "en" : "pl";
+  document.title = uiLang === "en" ? "Fabian AI Assistant" : "Fabian Asystent AGI";
+  const pageDescription = document.getElementById("pageDescription");
+  if (pageDescription) {
+    pageDescription.content = uiLang === "en"
+      ? "Talk to Fabian, the FabianAGI AI assistant for text, code, analysis, and everyday tasks."
+      : "Porozmawiaj z Fabianem, asystentem AI FabianAGI do pracy z tekstem, kodem, analizą i codziennymi zadaniami.";
+  }
+  const ogTitle = document.getElementById("ogTitle");
+  if (ogTitle) ogTitle.content = uiLang === "en" ? "Fabian - AI Assistant | FabianAGI" : "Fabian - Asystent AI | FabianAGI";
+  const ogDescription = document.getElementById("ogDescription");
+  if (ogDescription) ogDescription.content = pageDescription ? pageDescription.content : "";
   if (elements.composerInput) elements.composerInput.placeholder = t("placeholder");
   if (elements.composerHint) elements.composerHint.textContent = t("composerHint");
   if (elements.emptyHeading) elements.emptyHeading.textContent = t("emptyHeading").replace("{name}", assistantName());
@@ -210,7 +286,10 @@ function applyUiLang() {
     elements.attachBtn.setAttribute("aria-label", t("attach"));
     elements.attachBtn.setAttribute("title", t("attach"));
   }
-  if (elements.settingsBtn) elements.settingsBtn.setAttribute("aria-label", t("settings"));
+  if (elements.settingsBtn) {
+    elements.settingsBtn.setAttribute("aria-label", t("settings"));
+    elements.settingsBtn.setAttribute("title", t("settings"));
+  }
   if (elements.sideToggle) elements.sideToggle.setAttribute("aria-label", t("showConvs"));
   const newChatLabel = document.getElementById("newChatLabel");
   if (newChatLabel) newChatLabel.textContent = t("newChat");
@@ -288,7 +367,7 @@ function updateIndicators() {
   const customKey = keyLooksValid(settings.apiKey) ? settings.apiKey : "";
   elements.settingsBtn.classList.toggle("hasCustom", Boolean(customKey));
   const parts = [];
-  if (customKey) parts.push("Własny klucz API aktywny");
+  if (customKey) parts.push(t("ownKey"));
   const name = settings.name.trim();
   if (name) parts.push(t("persona") + ": " + name);
   elements.composerHint.textContent = parts.length
@@ -452,7 +531,7 @@ function openPreview(file) {
   const title = document.getElementById("previewTitle");
   if (!overlay || !frame) return;
   previewCurrentFile = file;
-  if (title) title.textContent = "Podgląd: " + file.name;
+  if (title) title.textContent = t("preview") + ": " + file.name;
   frame.srcdoc = file.content;
   setPreviewMode("desktop");
   overlay.hidden = false;
@@ -473,14 +552,14 @@ function createFileCard(file) {
     const previewBtn = document.createElement("button");
     previewBtn.type = "button";
     previewBtn.className = "btn btnSecondary btnSm";
-    previewBtn.textContent = "Podgląd";
+    previewBtn.textContent = t("filePreview");
     previewBtn.addEventListener("click", () => openPreview(file));
     card.appendChild(previewBtn);
   }
   const button = document.createElement("button");
   button.type = "button";
   button.className = "btn btnPrimary btnSm";
-  button.textContent = "Pobierz";
+  button.textContent = t("download");
   button.addEventListener("click", () => downloadFile(file));
   card.appendChild(name);
   card.appendChild(size);
@@ -497,10 +576,10 @@ function createProjectCard(files) {
   const headInfo = document.createElement("div");
   const headTitle = document.createElement("div");
   headTitle.className = "projectTitle";
-  headTitle.textContent = "Projekt";
+  headTitle.textContent = t("project");
   const headSub = document.createElement("div");
   headSub.className = "projectSub mono";
-  headSub.textContent = files.length + " plików";
+  headSub.textContent = files.length + " " + t("files");
   headInfo.appendChild(headTitle);
   headInfo.appendChild(headSub);
   const htmlFile =
@@ -512,14 +591,14 @@ function createProjectCard(files) {
     const previewBtn = document.createElement("button");
     previewBtn.type = "button";
     previewBtn.className = "btn btnSecondary btnSm";
-    previewBtn.textContent = "Podgląd strony";
+    previewBtn.textContent = t("pagePreview");
     previewBtn.addEventListener("click", () => openPreview(htmlFile));
     headActions.appendChild(previewBtn);
   }
   const zipBtn = document.createElement("button");
   zipBtn.type = "button";
   zipBtn.className = "btn btnPrimary btnSm";
-  zipBtn.textContent = "Pobierz ZIP";
+  zipBtn.textContent = t("downloadZip");
   zipBtn.addEventListener("click", () => {
     downloadBlob(buildZipBlob(files), "fabian-projekt.zip");
   });
@@ -823,7 +902,7 @@ function createAttachChip(name, onRemove) {
   if (onRemove) {
     const btn = document.createElement("button");
     btn.type = "button";
-    btn.setAttribute("aria-label", "Usuń załącznik " + name);
+    btn.setAttribute("aria-label", t("removeAttachment") + " " + name);
     btn.textContent = "×";
     btn.addEventListener("click", onRemove);
     chip.appendChild(btn);
@@ -1033,7 +1112,7 @@ function attachMessageActions(node, conversation, index) {
     addBtn("\u21bb", t("genAgain"), () => {
       regenerateFrom(conversation, index);
     });
-    addBtn("\ud83d\udd0a", "Odtwórz jako lektor", (event) => {
+    addBtn("\ud83d\udd0a", t("narrator"), (event) => {
       speakText(message.content, event.currentTarget);
     });
   }
@@ -1079,7 +1158,7 @@ function regenerateFrom(conversation, assistantIndex) {
   const [textEl, node] = createPlaceholder();
   sending = true;
   if (elements.sendBtn) elements.sendBtn.disabled = true;
-  setBusyStatus("Fabian pisze\u2026");
+  setBusyStatus(t("fabianWriting"));
   requestAssistant(conversation, textEl, node, []);
 }
 
@@ -1088,7 +1167,7 @@ function renderMessages() {
   elements.messages.innerHTML = "";
   if (!conversation || conversation.messages.length === 0) {
     elements.chatEmpty.style.display = "";
-    elements.chatTitle.textContent = "Nowa rozmowa";
+    elements.chatTitle.textContent = t("newConvTitle");
     return;
   }
   elements.chatEmpty.style.display = "none";
@@ -1147,10 +1226,10 @@ async function streamFabian(apiMessages, attachments, memory, onDelta) {
   const contentType = response.headers.get("content-type") || "";
   if (!response.ok && contentType.includes("application/json")) {
     const data = await response.json().catch(() => null);
-    throw new Error(data?.error || "Nie udało się uzyskać odpowiedzi. Spróbuj ponownie.");
+    throw new Error(data?.error || t("errGeneric"));
   }
   if (!response.ok || !response.body) {
-    throw new Error("Nie udało się uzyskać odpowiedzi. Spróbuj ponownie.");
+    throw new Error(t("errGeneric"));
   }
 
   const reader = response.body.getReader();
@@ -1189,7 +1268,7 @@ function showError(textEl, node, onRetry) {
   node.classList.remove("msgFabian");
   node.classList.add("msgError");
   const name = node.querySelector(".msgName");
-  if (name) name.textContent = "Błąd";
+  if (name) name.textContent = t("responseError");
   textEl.className = "msgText";
   textEl.textContent = t("errGeneric");
   const retry = document.createElement("button");
@@ -1205,7 +1284,7 @@ function createPlaceholder() {
   const dots = document.createElement("span");
   dots.className = "loadingDots";
   dots.innerHTML = "<i></i><i></i><i></i>";
-  dots.setAttribute("aria-label", "Fabian pisze");
+  dots.setAttribute("aria-label", t("fabianWriting"));
   text.appendChild(dots);
   elements.messages.appendChild(node);
   updateScroll();
@@ -1331,7 +1410,7 @@ async function handleFiles(fileList) {
         if (file.size > 400 * 1024) {
         alertDialog(
           t("attach"),
-          (file.name || "file") + " - " + (uiLang === "en" ? "file too large (max 400 KB)." : "plik za duży (max 400 KB)."),
+          (file.name || "file") + " - " + t("tooLarge"),
           "OK"
         );
         continue;
@@ -1413,7 +1492,7 @@ elements.chatScroll.addEventListener("scroll", syncPinned);
 elements.scrollPill.addEventListener("click", forceScroll);
 
 elements.newChatBtn.addEventListener("click", () => {
-  createConversation(state, "Nowa rozmowa");
+  createConversation(state, t("newConvTitle"));
   saveChats(state);
   renderAll();
   closeSidebar();
@@ -1510,8 +1589,8 @@ function fabDialogOpen(options) {
     if (options.variant === "info") modal.classList.add("info");
     titleEl.textContent = options.title || "";
     msgEl.textContent = options.message || "";
-    okBtn.textContent = options.confirmText || "Potwierdź";
-    cancelBtn.textContent = options.cancelText || "Anuluj";
+    okBtn.textContent = options.confirmText || t("confirm");
+    cancelBtn.textContent = options.cancelText || t("cancel");
     if (options.input) {
       field.hidden = false;
       input.value = options.initial || "";
@@ -1543,7 +1622,7 @@ function editDialog(currentText) {
     message: "",
     input: true,
     initial: currentText,
-    confirmText: uiLang === "en" ? "Save" : "Zapisz",
+    confirmText: t("save"),
     variant: "info"
   });
 }
@@ -1585,9 +1664,13 @@ function renderMemoryModal(conversation) {
   if (elements.convUserPersona) {
     elements.convUserPersona.value = conversation.userPersona || "";
   }
+  const memoryText =
+    conversation.memory && typeof conversation.memory.text === "string"
+      ? conversation.memory.text
+      : "";
   const stats = [
-    conversation.messages.length + " wiadomości",
-    (conversation.memory ? conversation.memory.text.length : 0) + " znaków pamięci"
+    conversation.messages.length + " " + t("memoryMessages"),
+    memoryText.length + " " + t("memoryCharacters")
   ];
   elements.convStats.innerHTML = "";
   for (const stat of stats) {
@@ -1596,24 +1679,24 @@ function renderMemoryModal(conversation) {
     chip.textContent = stat;
     elements.convStats.appendChild(chip);
   }
-  if (conversation.memory && conversation.memory.text) {
-    elements.convMemoryText.textContent = conversation.memory.text;
+  if (conversation.memory && memoryText) {
+    elements.convMemoryText.textContent = memoryText;
     let extraLine =
-      "Zaktualizowano " + formatTime(conversation.memory.updatedAt) +
-      " · po " + conversation.memory.count + " wiadomościach";
+      t("memoryUpdated") + " " + formatTime(conversation.memory.updatedAt) +
+      " · " + t("afterMessages") + " " + conversation.memory.count + " " + t("memoryMessages");
     const s = conversation.memory.structured;
     if (s && typeof s === "object") {
       const parts = [];
-      if (Array.isArray(s.people) && s.people.length) parts.push("osoby: " + s.people.slice(0, 4).join(", "));
-      if (Array.isArray(s.goals) && s.goals.length) parts.push("cele: " + s.goals.length);
-      if (Array.isArray(s.decisions) && s.decisions.length) parts.push("decyzje: " + s.decisions.length);
+      if (Array.isArray(s.people) && s.people.length) parts.push(t("people") + ": " + s.people.slice(0, 4).join(", "));
+      if (Array.isArray(s.goals) && s.goals.length) parts.push(t("goals") + ": " + s.goals.length);
+      if (Array.isArray(s.decisions) && s.decisions.length) parts.push(t("decisions") + ": " + s.decisions.length);
       if (parts.length) extraLine += "  |  " + parts.join(" · ");
     }
     elements.convMemoryUpdated.textContent = extraLine;
     elements.memoryForget.disabled = false;
   } else {
     elements.convMemoryText.textContent =
-      "Fabian nie zapamiętał jeszcze tej rozmowy. Napisz kilkanaście wiadomości - sam zrobi skrót, albo kliknij \"Zapamiętaj teraz\".";
+      t("noMemory");
     elements.convMemoryUpdated.textContent = "";
     elements.memoryForget.disabled = true;
   }
@@ -1653,7 +1736,7 @@ async function speakText(text, button, silent) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ text: text.slice(0, 4000), voice: settings.voice || "autumn" })
     });
-    if (!response.ok) return;
+    if (!response.ok) throw new Error("Speech request failed");
     const audioData = await response.arrayBuffer();
     const ctx = new (window.AudioContext || window.webkitAudioContext)();
     const audio = await ctx.decodeAudioData(audioData);
@@ -1667,21 +1750,21 @@ async function speakText(text, button, silent) {
     if (button) button.classList.remove("active");
     if (silent) return;
     alertDialog(
-      "Lektor / Narrator",
-      uiLang === "en" ? "The narrator could not play the response." : "Lektor nie mógł odtworzyć odpowiedzi.",
+      t("narrator"),
+      t("narratorError"),
       "OK"
     );
   }
 }
 
-async function buildMemoryText(structured) {
+function buildMemoryText(structured) {
   const lines = [];
   if (structured.summary) lines.push(structured.summary);
   const sections = [
-    ["important_facts", "Fakty"], ["people", "Osoby"], ["preferences", "Preferencje"],
-    ["goals", "Cele"], ["decisions", "Decyzje"], ["plans", "Plany"],
-    ["important_dates", "Daty"], ["constraints", "Ograniczenia"],
-    ["unresolved_items", "Nierozwiązane"], ["ongoing_context", "Bieżące"]
+    ["important_facts", t("facts")], ["people", t("people")], ["preferences", t("preferences")],
+    ["goals", t("goals")], ["decisions", t("decisions")], ["plans", t("plans")],
+    ["important_dates", t("dates")], ["constraints", t("constraints")],
+    ["unresolved_items", t("unresolved")], ["ongoing_context", t("ongoing")]
   ];
   for (const sec of sections) {
     const items = structured[sec[0]];
@@ -1719,8 +1802,8 @@ async function compactConversation(conversation, showStatus) {
     if (!response.ok || !structured || !structured.summary) {
       if (showStatus) {
         alertDialog(
-          "Pamięć rozmowy",
-          uiLang === "en" ? "Could not save the memory. Try again." : "Nie udało się zapamiętać rozmowy. Spróbuj ponownie.",
+          t("memoryTitle"),
+          t("saveMemoryError"),
           "OK"
         );
       }
@@ -1840,7 +1923,7 @@ if (elements.memoryRefresh) {
 if (elements.memoryClear) {
   elements.memoryClear.addEventListener("click", () => {
     confirmDialog(
-      t("convDeleted").replace("rozmowę", "całą pamięć"),
+      uiLang === "en" ? "Delete all conversation memory?" : "Usunąć całą pamięć rozmów?",
       t("convDeleteMsg"),
       t("del")
     ).then((yes) => {
@@ -1864,7 +1947,7 @@ document.addEventListener("keydown", (event) => {
 
 function updateIdentity() {
   if (elements.emptyHeading) {
-    elements.emptyHeading.textContent = "Cześć, jestem " + assistantName() + ".";
+    elements.emptyHeading.textContent = t("emptyHeading").replace("{name}", assistantName());
   }
   const emptyAvatar = document.querySelector(".emptyAvatar");
   if (emptyAvatar) fillBotAvatar(emptyAvatar);
@@ -1914,8 +1997,8 @@ if (elements.settingsSave) {
     closeSettingsModal();
     updateIdentity();
     alertDialog(
-      uiLang === "en" ? "Saved" : "Zapisano",
-      uiLang === "en" ? "Settings have been saved." : "Ustawienia zostały zapisane.",
+      t("saved"),
+      t("settingsSaved"),
       "OK"
     );
   });

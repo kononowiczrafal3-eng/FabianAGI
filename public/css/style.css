@@ -553,25 +553,28 @@ code {
 
 .modalOverlay {
   position: fixed; inset: 0;
-  background: rgba(0, 0, 0, 0.6);
+  background: rgba(5, 7, 10, 0.76);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   z-index: 100;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 20px;
+  padding: clamp(16px, 4vw, 40px);
+  overflow-y: auto;
 }
 .modal {
-  background: var(--panel);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
+  background: linear-gradient(145deg, var(--panel), var(--bg2));
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
   width: min(430px, 100%);
-  padding: 20px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  padding: 22px;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 106, 31, 0.05);
   max-height: 92dvh;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
 }
-.modalHead { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.modalHead { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
 .modalHead h2 { font-size: 16px; }
 .modalDesc { color: var(--text2); font-size: 13px; margin-bottom: 16px; }
 .field { margin-bottom: 14px; }
@@ -1092,6 +1095,149 @@ code {
   background: #fff;
 }
 
+/* From Uiverse.io by Galahhad */ 
+.switch {
+  /* switch */
+  --switch-width: 46px;
+  --switch-height: 24px;
+  --switch-bg: rgb(131, 131, 131);
+  --switch-checked-bg: rgb(0, 218, 80);
+  --switch-offset: calc((var(--switch-height) - var(--circle-diameter)) / 2);
+  --switch-transition: all .2s cubic-bezier(0.27, 0.2, 0.25, 1.51);
+  /* circle */
+  --circle-diameter: 18px;
+  --circle-bg: #fff;
+  --circle-shadow: 1px 1px 2px rgba(146, 146, 146, 0.45);
+  --circle-checked-shadow: -1px 1px 2px rgba(163, 163, 163, 0.45);
+  --circle-transition: var(--switch-transition);
+  /* icon */
+  --icon-transition: all .2s cubic-bezier(0.27, 0.2, 0.25, 1.51);
+  --icon-cross-color: var(--switch-bg);
+  --icon-cross-size: 6px;
+  --icon-checkmark-color: var(--switch-checked-bg);
+  --icon-checkmark-size: 10px;
+  /* effect line */
+  --effect-width: calc(var(--circle-diameter) / 2);
+  --effect-height: calc(var(--effect-width) / 2 - 1px);
+  --effect-bg: var(--circle-bg);
+  --effect-border-radius: 1px;
+  --effect-transition: all .2s ease-in-out;
+}
+
+.switch input {
+  display: none;
+}
+
+.switch {
+  display: inline-block;
+}
+
+.switch svg {
+  -webkit-transition: var(--icon-transition);
+  -o-transition: var(--icon-transition);
+  transition: var(--icon-transition);
+  position: absolute;
+  height: auto;
+}
+
+.switch .checkmark {
+  width: var(--icon-checkmark-size);
+  color: var(--icon-checkmark-color);
+  -webkit-transform: scale(0);
+  -ms-transform: scale(0);
+  transform: scale(0);
+}
+
+.switch .cross {
+  width: var(--icon-cross-size);
+  color: var(--icon-cross-color);
+}
+
+.slider {
+  -webkit-box-sizing: border-box;
+  box-sizing: border-box;
+  width: var(--switch-width);
+  height: var(--switch-height);
+  background: var(--switch-bg);
+  border-radius: 999px;
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  align-items: center;
+  position: relative;
+  -webkit-transition: var(--switch-transition);
+  -o-transition: var(--switch-transition);
+  transition: var(--switch-transition);
+  cursor: pointer;
+}
+
+.circle {
+  width: var(--circle-diameter);
+  height: var(--circle-diameter);
+  background: var(--circle-bg);
+  border-radius: inherit;
+  -webkit-box-shadow: var(--circle-shadow);
+  box-shadow: var(--circle-shadow);
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  align-items: center;
+  -webkit-box-pack: center;
+  -ms-flex-pack: center;
+  justify-content: center;
+  -webkit-transition: var(--circle-transition);
+  -o-transition: var(--circle-transition);
+  transition: var(--circle-transition);
+  z-index: 1;
+  position: absolute;
+  left: var(--switch-offset);
+}
+
+.slider::before {
+  content: "";
+  position: absolute;
+  width: var(--effect-width);
+  height: var(--effect-height);
+  left: calc(var(--switch-offset) + (var(--effect-width) / 2));
+  background: var(--effect-bg);
+  border-radius: var(--effect-border-radius);
+  -webkit-transition: var(--effect-transition);
+  -o-transition: var(--effect-transition);
+  transition: var(--effect-transition);
+}
+
+/* actions */
+
+.switch input:checked+.slider {
+  background: var(--switch-checked-bg);
+}
+
+.switch input:checked+.slider .checkmark {
+  -webkit-transform: scale(1);
+  -ms-transform: scale(1);
+  transform: scale(1);
+}
+
+.switch input:checked+.slider .cross {
+  -webkit-transform: scale(0);
+  -ms-transform: scale(0);
+  transform: scale(0);
+}
+
+.switch input:checked+.slider::before {
+  left: calc(100% - var(--effect-width) - (var(--effect-width) / 2) - var(--switch-offset));
+}
+
+.switch input:checked+.slider .circle {
+  left: calc(100% - var(--circle-diameter) - var(--switch-offset));
+  -webkit-box-shadow: var(--circle-checked-shadow);
+  box-shadow: var(--circle-checked-shadow);
+}
+
 .chatMain.drag-active .chatScroll {
   outline: 2px dashed rgba(255, 106, 31, 0.65);
   outline-offset: -8px;
@@ -1413,20 +1559,49 @@ code {
 .fabModal.info .fabDialogOk:hover { background: var(--orange); border-color: var(--orange); color: #1a0d04; }
 .fabModal.info #fabDialogCancel { display: none; }
 
-/* checkbox w ustawieniach */
-.checkRow {
-  display: flex !important;
+/* przełącznik auto-narratora */
+.settingsToggleRow {
+  display: flex;
   align-items: center;
-  gap: 10px;
-  cursor: pointer;
-  font-weight: 400 !important;
-  color: var(--text2) !important;
+  gap: 12px;
+  min-height: 42px;
+  padding: 10px 12px;
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid var(--border);
+  border-radius: 8px;
 }
-.checkRow input[type="checkbox"] {
+.settingsToggleText {
+  color: var(--text2);
+  font-size: 13px;
+  line-height: 1.45;
+}
+.settingsToggleText span { color: var(--text3); }
+.settingsToggleRow .switch { display: inline-flex; flex: none; margin: 0; cursor: pointer; }
+.switch input { position: absolute; opacity: 0; pointer-events: none; }
+.slider {
+  display: block;
+  width: 42px;
+  height: 24px;
+  padding: 3px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+.circle {
+  display: grid;
+  place-items: center;
   width: 16px;
   height: 16px;
-  accent-color: var(--orange);
-  cursor: pointer;
-  flex: none;
+  color: var(--text3);
+  background: var(--text2);
+  border-radius: 50%;
+  transition: transform 0.2s ease, color 0.2s ease, background 0.2s ease;
 }
-.checkRow span { font-size: 13px; }
+.circle svg { width: 8px; height: 8px; fill: currentColor; }
+.checkmark { display: none; }
+.switch input:checked + .slider { background: rgba(255, 106, 31, 0.2); border-color: var(--orange); }
+.switch input:checked + .slider .circle { transform: translateX(17px); color: #fff; background: var(--orange); }
+.switch input:checked + .slider .cross { display: none; }
+.switch input:checked + .slider .checkmark { display: block; }
+.switch input:focus-visible + .slider { outline: 2px solid var(--orange); outline-offset: 3px; }
