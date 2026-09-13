@@ -30,7 +30,9 @@ function isValidMemory(memory) {
     typeof memory === "object" &&
     typeof memory.text === "string" &&
     typeof memory.count === "number" &&
-    typeof memory.updatedAt === "number"
+    typeof memory.updatedAt === "number" &&
+    (memory.structured === undefined ||
+      (typeof memory.structured === "object" && memory.structured !== null))
   );
 }
 

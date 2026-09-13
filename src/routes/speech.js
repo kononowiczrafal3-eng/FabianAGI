@@ -1,5 +1,7 @@
 import { rateLimit } from "../lib/rateLimit.js";
 
+const VOICES = new Set(["diana", "hannah", "autumn", "austin", "daniel", "troy"]);
+
 function readJson(req) {
   return new Promise((resolve, reject) => {
     let size = 0;
@@ -40,8 +42,9 @@ export async function handleSpeech(req, res) {
     sendJson(res, 429, { error: "Zbyt wiele żądań." });
     return;
   }
-  if (!process.env.OPENAI_API_KEY) {
-    sendJson(res, 503, { error: "Lektor jest niedostępny (brak OPENAI_API_KEY)." });
+  const apiKey = process.env.GROQ_API_KEY;
+  if (!apiKey) {
+    sendJson(res, 503, { error: "Lektor jest niedostępny (brak GROQ_API_KEY)." });
     return;
   }
   let body;
@@ -52,31 +55,32 @@ export async function handleSpeech(req, res) {
     return;
   }
   const text = typeof body.text === "string" ? body.text.trim().slice(0, 4000) : "";
+  const voice = VOICES.has(body.voice) ? body.voice : "autumn";
   if (!text) {
     sendJson(res, 400, { error: "Brak tekstu." });
     return;
   }
   try {
-    const upstream = await fetch("https://api.openai.com/v1/audio/speech", {
+    const upstream = await fetch("https://api.groq.com/openai/v1/audio/speech", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: "Bearer " + process.env.OPENAI_API_KEY
+        Authorization: "Bearer " + apiKey
       },
       body: JSON.stringify({
-        model: "gpt-4o-mini-tts",
-        voice: "coral",
-        input: text,
-        instructions: "Speak naturally, in the language of the text.",
-        response_format: "pcm"
+        model: "canopylabs/orpheus-v1-english",
+        voice: voice,
+        response_format: "wav",
+        input: text
       })
     });
     if (!upstream.ok || !upstream.body) {
+      console.error("SPEECH ERROR:", upstream.status);
       sendJson(res, 502, { error: "Lektor nie odpowiada. Spróbuj ponownie." });
       return;
     }
     res.writeHead(200, {
-      "Content-Type": "audio/pcm; rate=24000; bits=16; channels=1",
+      "Content-Type": "audio/wav",
       "Cache-Control": "no-store",
       "X-Content-Type-Options": "nosniff"
     });
@@ -87,7 +91,8 @@ export async function handleSpeech(req, res) {
       res.write(Buffer.from(value));
     }
     res.end();
-  } catch {
+  } catch (err) {
+    console.error("SPEECH ERROR:", err && err.message ? err.message : "unknown");
     sendJson(res, 502, { error: "Lektor nie odpowiada. Spróbuj ponownie." });
   }
 }

@@ -14,7 +14,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/css/style.css?v=1.7.1">
-  <script src="/js/chat.js?v=1.6.18" type="module"></script>
+  <script src="/js/chat.js?v=1.6.19" type="module"></script>
 <base target="_blank">
 </head>
 <body class="appMode">
@@ -107,6 +107,17 @@
             </button>
           </div>
           <p class="modalDesc">Możesz użyć własnego klucza API (Groq lub dowolne API zgodne z OpenAI). Imię i osobowość działają niezależnie od wybranego klucza.</p>
+          <div class="field">
+            <label for="settingsVoice">Głos lektora / Narrator voice</label>
+            <select id="settingsVoice" class="fieldSelect">
+              <option value="autumn">autumn</option>
+              <option value="diana">diana</option>
+              <option value="hannah">hannah</option>
+              <option value="austin">austin</option>
+              <option value="daniel">daniel</option>
+              <option value="troy">troy</option>
+            </select>
+          </div>
           <div class="field">
             <label for="settingsModel">Model</label>
             <select id="settingsModel" class="fieldSelect">

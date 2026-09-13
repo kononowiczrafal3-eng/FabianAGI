@@ -200,8 +200,53 @@ export async function handleChat(req, res) {
   res.end();
 }
 
+const COMPACT_SYSTEM = `You compress conversations for future AI context. Output ONLY valid JSON, no prose, no code fences.
+
+Schema:
+{"summary":"string","important_facts":[],"people":[],"entities":[],"preferences":[],"goals":[],"decisions":[],"plans":[],"important_dates":[],"constraints":[],"unresolved_items":[],"ongoing_context":[]}
+
+Rules:
+- Preserve names, dates, numbers and facts EXACTLY as stated. Never invent or infer facts not present.
+- Capture: who the user is, their preferences, people/entities mentioned, decisions, plans, goals, requirements, constraints, ongoing tasks, unresolved questions, commitments.
+- Remove greetings, filler and small talk. Factual precision over pretty prose.
+- Write summary and fields in the same language as the conversation.
+- Another AI instance must be able to continue the conversation naturally using only this JSON.`;
+
+function parseCompactJson(raw) {
+  const fallback = { summary: String(raw || "").trim() };
+  if (!fallback.summary) return null;
+  let text = fallback.summary;
+  const fence = text.match(/```(?:json)?\s*([\s\S]*?)```/);
+  if (fence) text = fence[1].trim();
+  const start = text.indexOf("{");
+  const end = text.lastIndexOf("}");
+  if (start === -1 || end === -1 || end <= start) return fallback;
+  try {
+    const parsed = JSON.parse(text.slice(start, end + 1));
+    if (!parsed || typeof parsed !== "object") return fallback;
+    const arr = (v) => (Array.isArray(v) ? v.map((x) => String(x)).slice(0, 30) : []);
+    return {
+      summary: String(parsed.summary || fallback.summary).slice(0, 3000),
+      important_facts: arr(parsed.important_facts),
+      people: arr(parsed.people),
+      entities: arr(parsed.entities),
+      preferences: arr(parsed.preferences),
+      goals: arr(parsed.goals),
+      decisions: arr(parsed.decisions),
+      plans: arr(parsed.plans),
+      important_dates: arr(parsed.important_dates),
+      constraints: arr(parsed.constraints),
+      unresolved_items: arr(parsed.unresolved_items),
+      ongoing_context: arr(parsed.ongoing_context)
+    };
+  } catch {
+    return fallback;
+  }
+}
+
 export async function handleCompact(req, res) {
-  if (!rateLimit(clientIp(req))) {
+  const ip = clientIp(req);
+  if (!rateLimit("compact:" + ip)) {
     sendJson(res, 429, { error: "Zbyt wiele żądań. Odczekaj chwilę i spróbuj ponownie." });
     return;
   }
@@ -226,28 +271,28 @@ export async function handleCompact(req, res) {
     sendJson(res, 503, { error: "Usługa AI jest chwilowo niedostępna." });
     return;
   }
+
+  // twardy limit wejscia: ostatnie 40 wiadomosci, kazda max 3000 znakow (~120KB)
+  const slice = check.messages
+    .slice(-40)
+    .map((msg) => ({ role: msg.role, content: msg.content.slice(0, 3000) }));
+
   try {
-    const slice = check.messages.slice(-60);
     const completion = await resolved.client.chat.completions.create({
       model: "groq/compound-mini",
-      messages: [
-        {
-          role: "system",
-          content:
-            "Streszczasz rozmowę do pamięci asystenta. Wypisz po polsku 5-10 najważniejszych punktów: kim jest rozmówca, o czym rozmawiali, jakie decyzje i fakty padły. Same punkty, bez wstępu i zakończenia."
-        },
-        ...slice
-      ],
+      messages: [{ role: "system", content: COMPACT_SYSTEM }, ...slice],
       stream: false,
-      max_completion_tokens: 600
+      max_completion_tokens: 1200
     });
-    const summary = completion?.choices?.[0]?.message?.content?.trim();
-    if (!summary) {
-      sendJson(res, 502, { error: "Nie udało się zapamiętać. Spróbuj ponownie." });
+    const raw = completion?.choices?.[0]?.message?.content?.trim();
+    const structured = parseCompactJson(raw);
+    if (!structured || !structured.summary) {
+      sendJson(res, 502, { error: "Model nie zwrócił skrótu. Spróbuj ponownie." });
       return;
     }
-    sendJson(res, 200, { summary });
-  } catch {
+    sendJson(res, 200, { summary: structured });
+  } catch (err) {
+    console.error("COMPACT ERROR:", err && err.message ? err.message : "unknown");
     sendJson(res, 502, { error: "Nie udało się zapamiętać. Spróbuj ponownie." });
   }
 }

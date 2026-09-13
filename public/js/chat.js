@@ -107,6 +107,7 @@ const elements = {
   fileInput: document.getElementById("fileInput"),
   attachRow: document.getElementById("attachRow"),
   settingsLang: document.getElementById("settingsLang"),
+  settingsVoice: document.getElementById("settingsVoice"),
   settingsBtn: document.getElementById("settingsBtn"),
   settingsOverlay: document.getElementById("settingsOverlay"),
   settingsClose: document.getElementById("settingsClose"),
@@ -157,7 +158,8 @@ function loadSettings() {
     personaMode: "append",
     model: "groq/compound-mini",
     botIcon: "",
-    lang: "pl"
+    lang: "pl",
+    voice: "autumn"
   };
   try {
     const raw = localStorage.getItem(settingsKey);
@@ -172,7 +174,8 @@ function loadSettings() {
       personaMode: data.personaMode === "replace" ? "replace" : "append",
       model: typeof data.model === "string" ? data.model : "groq/compound-mini",
       botIcon: asCleanString(data.botIcon),
-      lang: data.lang === "en" ? "en" : "pl"
+      lang: data.lang === "en" ? "en" : "pl",
+      voice: typeof data.voice === "string" ? data.voice : "autumn"
     };
   } catch {
     return fallback;
@@ -1593,9 +1596,18 @@ function renderMemoryModal(conversation) {
   }
   if (conversation.memory && conversation.memory.text) {
     elements.convMemoryText.textContent = conversation.memory.text;
-    elements.convMemoryUpdated.textContent =
+    let extraLine =
       "Zaktualizowano " + formatTime(conversation.memory.updatedAt) +
       " · po " + conversation.memory.count + " wiadomościach";
+    const s = conversation.memory.structured;
+    if (s && typeof s === "object") {
+      const parts = [];
+      if (Array.isArray(s.people) && s.people.length) parts.push("osoby: " + s.people.slice(0, 4).join(", "));
+      if (Array.isArray(s.goals) && s.goals.length) parts.push("cele: " + s.goals.length);
+      if (Array.isArray(s.decisions) && s.decisions.length) parts.push("decyzje: " + s.decisions.length);
+      if (parts.length) extraLine += "  |  " + parts.join(" · ");
+    }
+    elements.convMemoryUpdated.textContent = extraLine;
     elements.memoryForget.disabled = false;
   } else {
     elements.convMemoryText.textContent =
@@ -1637,13 +1649,12 @@ async function speakText(text, button) {
     const response = await fetch("/api/speech", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text: text.slice(0, 4000) })
+      body: JSON.stringify({ text: text.slice(0, 4000), voice: settings.voice || "autumn" })
     });
     if (!response.ok) return;
-    const pcm = await response.arrayBuffer();
+    const audioData = await response.arrayBuffer();
     const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    const wav = pcmToWav(pcm, 24000);
-    const audio = await ctx.decodeAudioData(wav);
+    const audio = await ctx.decodeAudioData(audioData);
     const source = ctx.createBufferSource();
     source.buffer = audio;
     source.connect(ctx.destination);
@@ -1660,17 +1671,38 @@ async function speakText(text, button) {
   }
 }
 
+async function buildMemoryText(structured) {
+  const lines = [];
+  if (structured.summary) lines.push(structured.summary);
+  const sections = [
+    ["important_facts", "Fakty"], ["people", "Osoby"], ["preferences", "Preferencje"],
+    ["goals", "Cele"], ["decisions", "Decyzje"], ["plans", "Plany"],
+    ["important_dates", "Daty"], ["constraints", "Ograniczenia"],
+    ["unresolved_items", "Nierozwiązane"], ["ongoing_context", "Bieżące"]
+  ];
+  for (const sec of sections) {
+    const items = structured[sec[0]];
+    if (Array.isArray(items) && items.length) {
+      lines.push("", sec[1] + ":");
+      for (const item of items.slice(0, 15)) lines.push("- " + item);
+    }
+  }
+  return lines.join("\n").slice(0, 4000);
+}
+
 async function compactConversation(conversation, showStatus) {
   if (compacting || !conversation || conversation.messages.length === 0) return false;
+  if (conversation.memory && conversation.messages.length - conversation.memory.count < 2) return false;
   compacting = true;
   if (showStatus) setBusyStatus(t("compacting"));
   try {
     const body = {
       messages: conversation.messages
         .filter((m) => m.role === "user" || m.role === "assistant")
-        .slice(-60)
-        .map((m) => ({ role: m.role, content: m.content }))
+        .slice(-40)
+        .map((m) => ({ role: m.role, content: m.content.slice(0, 3000) }))
     };
+    if (conversation.userPersona) body.userPersona = conversation.userPersona;
     if (keyLooksValid(settings.apiKey)) body.apiKey = settings.apiKey;
     const baseUrl = validBaseUrl(settings.baseUrl);
     if (baseUrl) body.baseUrl = baseUrl;
@@ -1680,11 +1712,20 @@ async function compactConversation(conversation, showStatus) {
       body: JSON.stringify(body)
     });
     const data = await response.json().catch(() => null);
-    if (!response.ok || !data || typeof data.summary !== "string" || !data.summary.trim()) {
+    const structured = data && data.summary && typeof data.summary === "object" ? data.summary : null;
+    if (!response.ok || !structured || !structured.summary) {
+      if (showStatus) {
+        alertDialog(
+          "Pamięć rozmowy",
+          uiLang === "en" ? "Could not save the memory. Try again." : "Nie udało się zapamiętać rozmowy. Spróbuj ponownie.",
+          "OK"
+        );
+      }
       return false;
     }
     conversation.memory = {
-      text: data.summary.trim().slice(0, 4000),
+      text: buildMemoryText(structured),
+      structured: structured,
       count: conversation.messages.length,
       updatedAt: Date.now()
     };
@@ -1732,6 +1773,9 @@ function openSettings() {
   }
   if (elements.settingsLang) {
     elements.settingsLang.value = uiLang;
+  }
+  if (elements.settingsVoice) {
+    elements.settingsVoice.value = settings.voice || "autumn";
   }
   elements.settingsOverlay.hidden = false;
 }
@@ -1846,7 +1890,8 @@ if (elements.settingsSave) {
           : "append",
       model: elements.settingsModel ? elements.settingsModel.value : "groq/compound-mini",
       botIcon: elements.settingsBotIcon ? validBaseUrl(elements.settingsBotIcon.value) : "",
-      lang: elements.settingsLang && elements.settingsLang.value === "en" ? "en" : "pl"
+      lang: elements.settingsLang && elements.settingsLang.value === "en" ? "en" : "pl",
+      voice: elements.settingsVoice ? elements.settingsVoice.value : "autumn"
     };
     if (!keyLooksValid(settings.apiKey)) settings.apiKey = "";
     settings.baseUrl = validBaseUrl(settings.baseUrl);
@@ -1870,7 +1915,7 @@ if (elements.settingsSave) {
 }
 if (elements.settingsClear) {
   elements.settingsClear.addEventListener("click", () => {
-    settings = { apiKey: "", baseUrl: "", name: "", personality: "", personaMode: "append", model: "groq/compound-mini", botIcon: "", lang: "pl" };
+    settings = { apiKey: "", baseUrl: "", name: "", personality: "", personaMode: "append", model: "groq/compound-mini", botIcon: "", lang: "pl", voice: "autumn" };
     persistSettings();
     elements.settingsApiKey.value = "";
     elements.settingsBaseUrl.value = "";
@@ -1880,6 +1925,7 @@ if (elements.settingsClear) {
     if (elements.settingsModel) elements.settingsModel.value = "groq/compound-mini";
     if (elements.settingsBotIcon) elements.settingsBotIcon.value = "";
   if (elements.settingsLang) elements.settingsLang.value = "pl";
+  if (elements.settingsVoice) elements.settingsVoice.value = "autumn";
     updateIdentity();
   });
 }
