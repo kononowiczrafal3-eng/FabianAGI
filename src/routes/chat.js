@@ -273,16 +273,47 @@ export async function handleCompact(req, res) {
   }
 
   // twardy limit wejscia: ostatnie 40 wiadomosci, kazda max 3000 znakow (~120KB)
+  // + Groq wymaga, zeby ostatnia wiadomosc miala role "user"
   const slice = check.messages
     .slice(-40)
     .map((msg) => ({ role: msg.role, content: msg.content.slice(0, 3000) }));
+  while (slice.length && slice[slice.length - 1].role !== "user") {
+    slice.pop();
+  }
+  if (!slice.length) {
+    sendJson(res, 400, { error: "Brak wiadomości użytkownika do skrócenia." });
+    return;
+  }
 
-  try {
-    const completion = await resolved.client.chat.completions.create({
-      model: "groq/compound-mini",
+  async function tryCompact(model, withTools) {
+    const options = {
+      model: model,
       messages: [{ role: "system", content: COMPACT_SYSTEM }, ...slice],
       stream: false
-    });
+    };
+    if (withTools) {
+      options.compound_custom = {
+        tools: {
+          enabled_tools: ["web_search", "code_interpreter", "visit_website"]
+        }
+      };
+    }
+    return resolved.client.chat.completions.create(options);
+  }
+
+  let completion = null;
+  let lastErr = null;
+  try {
+    try {
+      completion = await tryCompact("groq/compound-mini", true);
+    } catch (err1) {
+      lastErr = err1;
+      console.error(
+        "COMPACT compound-mini [" + (err1 && err1.status ? err1.status : "?") + "]:",
+        err1 && err1.message ? err1.message : "unknown"
+      );
+      completion = await tryCompact("llama-3.3-70b-versatile", false);
+    }
     const raw = completion?.choices?.[0]?.message?.content?.trim();
     const structured = parseCompactJson(raw);
     if (!structured || !structured.summary) {
@@ -292,7 +323,7 @@ export async function handleCompact(req, res) {
     sendJson(res, 200, { summary: structured });
   } catch (err) {
     const status = err && err.status ? err.status : "?";
-    console.error("COMPACT ERROR [" + status + "]:", err && err.message ? err.message : "unknown");
+    console.error("COMPACT fallback [" + status + "]:", err && err.message ? err.message : "unknown");
     sendJson(res, 502, { error: "Nie udało się zapamiętać. Spróbuj ponownie." });
   }
 }

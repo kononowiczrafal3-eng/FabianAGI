@@ -1140,9 +1140,15 @@ code {
   display: flex;
   gap: 2px;
   opacity: 0;
-  transition: opacity 0.12s ease;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.12s ease, visibility 0.12s ease;
 }
-.msg:hover .msgActions { opacity: 1; }
+.msg:hover .msgActions {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
 .msgActionBtn {
   background: var(--panel);
   border: 1px solid var(--border);
@@ -1158,7 +1164,7 @@ code {
 .msgActionBtn:hover { color: var(--text); border-color: #3d444d; }
 .msgActionBtn.danger:hover { color: var(--red); border-color: var(--red); }
 @media (hover: none) {
-  .msgActions { opacity: 0.6; }
+  .msgActions { opacity: 0.6; visibility: visible; pointer-events: auto; }
 }
 
 /* ikona bota w awatarze */
@@ -1406,3 +1412,21 @@ code {
 .fabModal.info .fabDialogOk { border-color: var(--orange); color: var(--orange); }
 .fabModal.info .fabDialogOk:hover { background: var(--orange); border-color: var(--orange); color: #1a0d04; }
 .fabModal.info #fabDialogCancel { display: none; }
+
+/* checkbox w ustawieniach */
+.checkRow {
+  display: flex !important;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  font-weight: 400 !important;
+  color: var(--text2) !important;
+}
+.checkRow input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--orange);
+  cursor: pointer;
+  flex: none;
+}
+.checkRow span { font-size: 13px; }

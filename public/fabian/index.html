@@ -15,7 +15,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <link rel="stylesheet" href="/css/style.css?v=1.7.1">
-  <script src="/js/chat.js?v=1.6.20" type="module"></script>
+  <script src="/js/chat.js?v=1.6.21" type="module"></script>
 <base target="_blank">
 </head>
 <body class="appMode">
@@ -108,6 +108,12 @@
             </button>
           </div>
           <p class="modalDesc">Możesz użyć własnego klucza API (Groq lub dowolne API zgodne z OpenAI). Imię i osobowość działają niezależnie od wybranego klucza.</p>
+          <div class="field">
+            <label class="checkRow" for="settingsAutoTts">
+              <input type="checkbox" id="settingsAutoTts">
+              <span>Auto-narrator: czytaj odpowiedzi AI na głos / auto-narrate AI responses</span>
+            </label>
+          </div>
           <div class="field">
             <label for="settingsVoice">Głos lektora / Narrator voice</label>
             <select id="settingsVoice" class="fieldSelect">

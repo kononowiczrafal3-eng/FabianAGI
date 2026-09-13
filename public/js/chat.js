@@ -108,6 +108,7 @@ const elements = {
   attachRow: document.getElementById("attachRow"),
   settingsLang: document.getElementById("settingsLang"),
   settingsVoice: document.getElementById("settingsVoice"),
+  settingsAutoTts: document.getElementById("settingsAutoTts"),
   settingsBtn: document.getElementById("settingsBtn"),
   settingsOverlay: document.getElementById("settingsOverlay"),
   settingsClose: document.getElementById("settingsClose"),
@@ -159,7 +160,8 @@ function loadSettings() {
     model: "groq/compound-mini",
     botIcon: "",
     lang: "pl",
-    voice: "autumn"
+    voice: "autumn",
+    autoTts: false
   };
   try {
     const raw = localStorage.getItem(settingsKey);
@@ -175,7 +177,8 @@ function loadSettings() {
       model: typeof data.model === "string" ? data.model : "groq/compound-mini",
       botIcon: asCleanString(data.botIcon),
       lang: data.lang === "en" ? "en" : "pl",
-      voice: typeof data.voice === "string" ? data.voice : "autumn"
+      voice: typeof data.voice === "string" ? data.voice : "autumn",
+      autoTts: data.autoTts === true
     };
   } catch {
     return fallback;
@@ -1236,6 +1239,7 @@ async function requestAssistant(conversation, textEl, node, attachments) {
     saveChats(state);
     await finalizeAssistant(textEl, full, true);
     scrollNow();
+    if (settings.autoTts) speakText(full, null, true);
     maybeAutoCompact(conversation);
   } catch {
     showError(textEl, node, () => {
@@ -1639,7 +1643,7 @@ function pcmToWav(pcmBytes, sampleRate) {
   return buffer;
 }
 
-async function speakText(text, button) {
+async function speakText(text, button, silent) {
   if (ttsPlaying) return;
   ttsPlaying = true;
   if (button) button.classList.add("active");
@@ -1661,6 +1665,7 @@ async function speakText(text, button) {
   } catch {
     ttsPlaying = false;
     if (button) button.classList.remove("active");
+    if (silent) return;
     alertDialog(
       "Lektor / Narrator",
       uiLang === "en" ? "The narrator could not play the response." : "Lektor nie mógł odtworzyć odpowiedzi.",
@@ -1774,6 +1779,9 @@ function openSettings() {
   }
   if (elements.settingsVoice) {
     elements.settingsVoice.value = settings.voice || "autumn";
+  }
+  if (elements.settingsAutoTts) {
+    elements.settingsAutoTts.checked = settings.autoTts === true;
   }
   elements.settingsOverlay.hidden = false;
 }
@@ -1889,7 +1897,8 @@ if (elements.settingsSave) {
       model: elements.settingsModel ? elements.settingsModel.value : "groq/compound-mini",
       botIcon: elements.settingsBotIcon ? validBaseUrl(elements.settingsBotIcon.value) : "",
       lang: elements.settingsLang && elements.settingsLang.value === "en" ? "en" : "pl",
-      voice: elements.settingsVoice ? elements.settingsVoice.value : "autumn"
+      voice: elements.settingsVoice ? elements.settingsVoice.value : "autumn",
+      autoTts: elements.settingsAutoTts ? elements.settingsAutoTts.checked : false
     };
     if (!keyLooksValid(settings.apiKey)) settings.apiKey = "";
     settings.baseUrl = validBaseUrl(settings.baseUrl);
@@ -1913,7 +1922,7 @@ if (elements.settingsSave) {
 }
 if (elements.settingsClear) {
   elements.settingsClear.addEventListener("click", () => {
-    settings = { apiKey: "", baseUrl: "", name: "", personality: "", personaMode: "append", model: "groq/compound-mini", botIcon: "", lang: "pl", voice: "autumn" };
+    settings = { apiKey: "", baseUrl: "", name: "", personality: "", personaMode: "append", model: "groq/compound-mini", botIcon: "", lang: "pl", voice: "autumn", autoTts: false };
     persistSettings();
     elements.settingsApiKey.value = "";
     elements.settingsBaseUrl.value = "";
@@ -1924,6 +1933,7 @@ if (elements.settingsClear) {
     if (elements.settingsBotIcon) elements.settingsBotIcon.value = "";
   if (elements.settingsLang) elements.settingsLang.value = "pl";
   if (elements.settingsVoice) elements.settingsVoice.value = "autumn";
+  if (elements.settingsAutoTts) elements.settingsAutoTts.checked = false;
     updateIdentity();
   });
 }
