@@ -13,7 +13,8 @@ import {
 const state = loadChats();
 let sending = false;
 let pendingAttachments = [];
-const maxLength = 500;
+const maxLength = 10000;
+const fileThreshold = 500;
 const settingsKey = "fabian_settings";
 
 const elements = {
@@ -47,14 +48,20 @@ const elements = {
   emptyHeading: document.getElementById("emptyHeading"),
   composerHint: document.getElementById("composerHint"),
   chatStatus: document.getElementById("chatStatus"),
-  memoryStats: document.getElementById("memoryStats"),
-  memoryList: document.getElementById("memoryList"),
-  memoryClear: document.getElementById("memoryClear")
+  memoryClear: document.getElementById("memoryClear"),
+  memoryOverlay: document.getElementById("memoryOverlay"),
+  memoryModalClose: document.getElementById("memoryModalClose"),
+  memoryForget: document.getElementById("memoryForget"),
+  memoryRefresh: document.getElementById("memoryRefresh"),
+  convStats: document.getElementById("convStats"),
+  convMemoryText: document.getElementById("convMemoryText"),
+  convMemoryUpdated: document.getElementById("convMemoryUpdated")
 };
 
 const menu = document.createElement("div");
 menu.className = "chatMenu";
 menu.innerHTML =
+  '<button type="button" data-action="memory">Pamięć rozmowy</button>' +
   '<button type="button" data-action="rename">Zmień nazwę</button>' +
   '<button type="button" data-action="delete" class="menuDanger">Usuń rozmowę</button>';
 document.body.appendChild(menu);
@@ -87,6 +94,8 @@ function loadSettings() {
 
 let settings = loadSettings();
 let defaultPersonality = "";
+let compacting = false;
+let memoryTargetId = null;
 
 fetch("/api/persona")
   .then((res) => (res.ok ? res.json() : null))
@@ -168,9 +177,188 @@ function escapeHtml(value) {
     .replace(/"/g, "&quot;");
 }
 
+const crcTable = (() => {
+  const table = new Uint32Array(256);
+  for (let n = 0; n < 256; n += 1) {
+    let c = n;
+    for (let k = 0; k < 8; k += 1) {
+      c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1;
+    }
+    table[n] = c >>> 0;
+  }
+  return table;
+})();
+
+function crc32(bytes) {
+  let c = 0xffffffff;
+  for (let i = 0; i < bytes.length; i += 1) {
+    c = crcTable[(c ^ bytes[i]) & 0xff] ^ (c >>> 8);
+  }
+  return (c ^ 0xffffffff) >>> 0;
+}
+
+function buildZipBlob(files) {
+  const encoder = new TextEncoder();
+  const now = new Date();
+  const time =
+    ((now.getHours() << 11) | (now.getMinutes() << 5) | (now.getSeconds() >> 1)) & 0xffff;
+  const day =
+    (((now.getFullYear() - 1980) << 9) | ((now.getMonth() + 1) << 5) | now.getDate()) & 0xffff;
+  const chunks = [];
+  const central = [];
+  let offset = 0;
+  for (const file of files) {
+    const nameBytes = encoder.encode(file.name);
+    const data = encoder.encode(file.content);
+    const crc = crc32(data);
+    const local = new DataView(new ArrayBuffer(30));
+    local.setUint32(0, 0x04034b50, true);
+    local.setUint16(4, 20, true);
+    local.setUint16(6, 0, true);
+    local.setUint16(8, 0, true);
+    local.setUint16(10, time, true);
+    local.setUint16(12, day, true);
+    local.setUint32(14, crc, true);
+    local.setUint32(18, data.length, true);
+    local.setUint32(22, data.length, true);
+    local.setUint16(26, nameBytes.length, true);
+    chunks.push(new Uint8Array(local.buffer), nameBytes, data);
+    const cd = new DataView(new ArrayBuffer(46));
+    cd.setUint32(0, 0x02014b50, true);
+    cd.setUint16(4, 20, true);
+    cd.setUint16(6, 20, true);
+    cd.setUint16(12, time, true);
+    cd.setUint16(14, day, true);
+    cd.setUint32(16, crc, true);
+    cd.setUint32(20, data.length, true);
+    cd.setUint32(24, data.length, true);
+    cd.setUint16(28, nameBytes.length, true);
+    cd.setUint32(42, offset, true);
+    central.push({ header: new Uint8Array(cd.buffer), nameBytes });
+    offset += 30 + nameBytes.length + data.length;
+  }
+  let cdSize = 0;
+  for (const entry of central) {
+    chunks.push(entry.header, entry.nameBytes);
+    cdSize += 46 + entry.nameBytes.length;
+  }
+  const eocd = new DataView(new ArrayBuffer(22));
+  eocd.setUint32(0, 0x06054b50, true);
+  eocd.setUint16(8, central.length, true);
+  eocd.setUint16(10, central.length, true);
+  eocd.setUint32(12, cdSize, true);
+  eocd.setUint32(16, offset, true);
+  return new Blob([...chunks, new Uint8Array(eocd.buffer)], { type: "application/zip" });
+}
+
+function extractFileBlocks(text) {
+  const files = [];
+  const cleaned = text
+    .replace(/```file[ \t]+([^\n`]+)\n([\s\S]*?)```/g, (match, name, content) => {
+      files.push({ name: name.trim(), content: content.replace(/\n$/, "") });
+      return "";
+    })
+    .trim();
+  return { cleaned, files };
+}
+
+function downloadBlob(blob, name) {
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = name;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+function downloadFile(file) {
+  downloadBlob(
+    new Blob([file.content], { type: "application/octet-stream" }),
+    file.name || "plik.txt"
+  );
+}
+
+function openPreview(file) {
+  const overlay = document.getElementById("previewOverlay");
+  const frame = document.getElementById("previewFrame");
+  const title = document.getElementById("previewTitle");
+  if (!overlay || !frame) return;
+  if (title) title.textContent = "Podgląd: " + file.name;
+  frame.srcdoc = file.content;
+  overlay.hidden = false;
+}
+
+function createFileCard(file) {
+  const card = document.createElement("div");
+  card.className = "fileCard";
+  const name = document.createElement("span");
+  name.className = "fileCardName";
+  name.textContent = file.name || "plik.txt";
+  name.title = file.name || "";
+  const size = document.createElement("span");
+  size.className = "fileCardSize mono";
+  size.textContent = (new Blob([file.content]).size / 1024).toFixed(1) + " KB";
+  const isHtml = /\.(html?|htm)$/i.test(file.name || "");
+  if (isHtml) {
+    const previewBtn = document.createElement("button");
+    previewBtn.type = "button";
+    previewBtn.className = "btn btnSecondary btnSm";
+    previewBtn.textContent = "Podgląd";
+    previewBtn.addEventListener("click", () => openPreview(file));
+    card.appendChild(previewBtn);
+  }
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = "btn btnPrimary btnSm";
+  button.textContent = "Pobierz";
+  button.addEventListener("click", () => downloadFile(file));
+  card.appendChild(name);
+  card.appendChild(size);
+  card.appendChild(button);
+  return card;
+}
+
+function createProjectCard(files) {
+  const card = document.createElement("div");
+  card.className = "projectCard";
+
+  const head = document.createElement("div");
+  head.className = "projectHead";
+  const headInfo = document.createElement("div");
+  const headTitle = document.createElement("div");
+  headTitle.className = "projectTitle";
+  headTitle.textContent = "Projekt";
+  const headSub = document.createElement("div");
+  headSub.className = "projectSub mono";
+  headSub.textContent = files.length + " plików";
+  headInfo.appendChild(headTitle);
+  headInfo.appendChild(headSub);
+  const zipBtn = document.createElement("button");
+  zipBtn.type = "button";
+  zipBtn.className = "btn btnPrimary btnSm";
+  zipBtn.textContent = "Pobierz ZIP";
+  zipBtn.addEventListener("click", () => {
+    downloadBlob(buildZipBlob(files), "fabian-projekt.zip");
+  });
+  head.appendChild(headInfo);
+  head.appendChild(zipBtn);
+  card.appendChild(head);
+
+  const tree = document.createElement("div");
+  tree.className = "projectTree";
+  for (const file of files) {
+    tree.appendChild(createFileCard(file));
+  }
+  card.appendChild(tree);
+  return card;
+}
+
 function formatInline(value) {
   let text = escapeHtml(value);
   text = text.replace(/`([^`\n]+)`/g, '<code class="mdInline">$1</code>');
+  text = text.replace(/__([^_]+)__/g, "<u>$1</u>");
   text = text.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
   text = text.replace(/(^|[^*])\*([^*\n]+)\*/g, "$1<em>$2</em>");
   text = text.replace(/~~([^~]+)~~/g, "<del>$1</del>");
@@ -232,7 +420,18 @@ function renderMarkdown(source) {
     if (line.trim().startsWith("```")) {
       flushParagraph();
       closeList();
-      html += inCode ? "</code></pre>" : '<pre class="mdCode"><code>';
+      if (inCode) {
+        html += "</code></pre>";
+      } else {
+        const lang = line
+          .trim()
+          .slice(3)
+          .trim()
+          .split(/\s+/)[0];
+        html += '<pre class="mdCode"><code' +
+          (lang ? ' class="language-' + escapeHtml(lang) + '"' : "") +
+          ">";
+      }
       inCode = !inCode;
       i += 1;
       continue;
@@ -253,6 +452,13 @@ function renderMarkdown(source) {
       flushParagraph();
       closeList();
       html += "<hr>";
+      i += 1;
+      continue;
+    }
+    if (trimmed.startsWith("-# ")) {
+      flushParagraph();
+      closeList();
+      html += '<div class="mdSub">' + formatInline(trimmed.slice(3)) + "</div>";
       i += 1;
       continue;
     }
@@ -478,8 +684,44 @@ function buildMessageNode(role, content, attachments) {
 }
 
 function finalizeAssistant(textEl, full) {
+  const parsed = extractFileBlocks(full);
   textEl.className = "msgText md";
-  textEl.innerHTML = renderMarkdown(full);
+  textEl.innerHTML = renderMarkdown(parsed.cleaned || full);
+  if (parsed.files.length) {
+    const wrap = document.createElement("div");
+    wrap.className = "msgFiles";
+    if (parsed.files.length === 1) {
+      wrap.appendChild(createFileCard(parsed.files[0]));
+    } else {
+      wrap.appendChild(createProjectCard(parsed.files));
+    }
+    textEl.parentElement.appendChild(wrap);
+  }
+  const blocks = textEl.querySelectorAll("pre.mdCode");
+  for (const pre of blocks) {
+    const code = pre.querySelector("code");
+    if (window.hljs && code) {
+      try {
+        window.hljs.highlightElement(code);
+      } catch {
+        /* jezyk nierozpoznany - zostaje zwykly tekst */
+      }
+    }
+    const copyBtn = document.createElement("button");
+    copyBtn.type = "button";
+    copyBtn.className = "codeCopyBtn mono";
+    copyBtn.textContent = "kopiuj";
+    copyBtn.addEventListener("click", () => {
+      const target = code || pre;
+      navigator.clipboard.writeText(target.textContent).then(() => {
+        copyBtn.textContent = "skopiowano";
+        setTimeout(() => {
+          copyBtn.textContent = "kopiuj";
+        }, 1500);
+      });
+    });
+    pre.appendChild(copyBtn);
+  }
 }
 
 function renderMessages() {
@@ -509,8 +751,9 @@ function renderAll() {
   renderMessages();
 }
 
-async function streamFabian(apiMessages, attachments, onDelta) {
+async function streamFabian(apiMessages, attachments, memory, onDelta) {
   const body = { messages: apiMessages };
+  if (memory) body.memory = memory;
   if (keyLooksValid(settings.apiKey)) body.apiKey = settings.apiKey;
   const baseUrl = validBaseUrl(settings.baseUrl);
   if (baseUrl) body.baseUrl = baseUrl;
@@ -602,8 +845,10 @@ async function requestAssistant(conversation, textEl, node, attachments) {
   const apiMessages = conversation.messages
     .filter((m) => m.role === "user" || m.role === "assistant")
     .map((m) => ({ role: m.role, content: m.content }));
+  const memoryText =
+    conversation.memory && conversation.memory.text ? conversation.memory.text : null;
   try {
-    const full = await streamFabian(apiMessages, safeAttachments, (delta) => {
+    const full = await streamFabian(apiMessages, safeAttachments, memoryText, (delta) => {
       textEl.textContent = delta;
       updateScroll();
     });
@@ -612,6 +857,7 @@ async function requestAssistant(conversation, textEl, node, attachments) {
     saveChats(state);
     finalizeAssistant(textEl, full);
     updateScroll();
+    maybeAutoCompact(conversation);
   } catch {
     showError(textEl, node, () => {
       node.remove();
@@ -629,7 +875,7 @@ function updateCounter() {
   if (!elements.composerInput || !elements.charCounter) return;
   const length = elements.composerInput.value.length;
   elements.charCounter.textContent = length + "/" + maxLength;
-  elements.charCounter.classList.toggle("warn", length > maxLength - 15);
+  elements.charCounter.classList.toggle("warn", length > fileThreshold);
 }
 
 function handleSend() {
@@ -641,7 +887,7 @@ function handleSend() {
     conversation = createConversation(state, content.slice(0, 48));
   }
 
-  const userMessage = addMessage(state, conversation.id, "user", content);
+  const userMessage = addMessage(state, conversation.id, "user", messageContent);
   if (pendingAttachments.length) {
     userMessage.attachments = pendingAttachments.map((att) => ({ name: att.name }));
   }
@@ -655,12 +901,17 @@ function handleSend() {
   elements.chatTitle.textContent = conversation.title;
 
   const sentAttachments = pendingAttachments.slice(0, 5);
+  let messageContent = content;
+  if (content.length > fileThreshold) {
+    sentAttachments.push({ name: "wiadomosc.txt", content });
+    messageContent = content.slice(0, 280) + "…";
+  }
   pendingAttachments = [];
   renderAttachRow();
 
   const userNode = buildMessageNode(
     "user",
-    content,
+    messageContent,
     sentAttachments.map((att) => ({ name: att.name }))
   ).node;
   elements.messages.appendChild(userNode);
@@ -688,8 +939,8 @@ elements.composerInput.addEventListener("keydown", (event) => {
 if (elements.attachBtn && elements.fileInput) {
   elements.attachBtn.addEventListener("click", () => elements.fileInput.click());
 
-  elements.fileInput.addEventListener("change", async () => {
-  const files = Array.from(elements.fileInput.files || []).slice(
+  async function handleFiles(fileList) {
+  const files = Array.from(fileList || []).slice(
     0,
     Math.max(0, 5 - pendingAttachments.length)
   );
@@ -709,9 +960,44 @@ if (elements.attachBtn && elements.fileInput) {
       /* pliku nie dało się odczytać */
     }
   }
-  elements.fileInput.value = "";
   renderAttachRow();
   clearBusyStatus();
+  }
+
+  elements.fileInput.addEventListener("change", () => {
+    handleFiles(elements.fileInput.files);
+    elements.fileInput.value = "";
+  });
+}
+
+if (elements.chatScroll) {
+  const chatMainEl = elements.chatScroll.closest(".chatMain");
+  elements.chatScroll.addEventListener("dragover", (event) => {
+    event.preventDefault();
+    if (chatMainEl) chatMainEl.classList.add("drag-active");
+  });
+  elements.chatScroll.addEventListener("dragleave", () => {
+    if (chatMainEl) chatMainEl.classList.remove("drag-active");
+  });
+  elements.chatScroll.addEventListener("drop", (event) => {
+    event.preventDefault();
+    if (chatMainEl) chatMainEl.classList.remove("drag-active");
+    if (event.dataTransfer && event.dataTransfer.files) {
+      handleFiles(event.dataTransfer.files);
+    }
+  });
+}
+
+const previewOverlayEl = document.getElementById("previewOverlay");
+const previewCloseEl = document.getElementById("previewClose");
+if (previewCloseEl) {
+  previewCloseEl.addEventListener("click", () => {
+    if (previewOverlayEl) previewOverlayEl.hidden = true;
+  });
+}
+if (previewOverlayEl) {
+  previewOverlayEl.addEventListener("click", (event) => {
+    if (event.target === previewOverlayEl) previewOverlayEl.hidden = true;
   });
 }
 
@@ -767,6 +1053,12 @@ elements.sideList.addEventListener("click", (event) => {
 menu.addEventListener("click", (event) => {
   const action = event.target.dataset.action;
   if (!action || !menuTargetId) return;
+  if (action === "memory") {
+    setActiveConversation(state, menuTargetId);
+    saveChats(state);
+    renderAll();
+    openMemoryModal(menuTargetId);
+  }
   if (action === "rename") {
     const conversation = state.conversations.find((c) => c.id === menuTargetId);
     const next = window.prompt("Nowa nazwa rozmowy:", conversation?.title || "");
@@ -786,33 +1078,93 @@ menu.addEventListener("click", (event) => {
   closeMenu();
 });
 
-function renderMemoryPanel() {
-  if (!elements.memoryStats || !elements.memoryList) return;
-  let rawBytes = 0;
+function openMemoryModal(conversationId) {
+  const conversation = state.conversations.find((x) => x.id === conversationId);
+  if (!conversation) return;
+  memoryTargetId = conversationId;
+  renderMemoryModal(conversation);
+  elements.memoryOverlay.hidden = false;
+}
+
+function closeMemoryModal() {
+  elements.memoryOverlay.hidden = true;
+  memoryTargetId = null;
+}
+
+function renderMemoryModal(conversation) {
+  if (!elements.convStats) return;
+  const stats = [
+    conversation.messages.length + " wiadomości",
+    (conversation.memory ? conversation.memory.text.length : 0) + " znaków pamięci"
+  ];
+  elements.convStats.innerHTML = "";
+  for (const stat of stats) {
+    const chip = document.createElement("span");
+    chip.className = "convStat";
+    chip.textContent = stat;
+    elements.convStats.appendChild(chip);
+  }
+  if (conversation.memory && conversation.memory.text) {
+    elements.convMemoryText.textContent = conversation.memory.text;
+    elements.convMemoryUpdated.textContent =
+      "Zaktualizowano " + formatTime(conversation.memory.updatedAt) +
+      " · po " + conversation.memory.count + " wiadomościach";
+    elements.memoryForget.disabled = false;
+  } else {
+    elements.convMemoryText.textContent =
+      "Fabian nie zapamiętał jeszcze tej rozmowy. Napisz kilkanaście wiadomości - sam zrobi skrót, albo kliknij \"Zapamiętaj teraz\".";
+    elements.convMemoryUpdated.textContent = "";
+    elements.memoryForget.disabled = true;
+  }
+}
+
+async function compactConversation(conversation, showStatus) {
+  if (compacting || !conversation || conversation.messages.length === 0) return false;
+  compacting = true;
+  if (showStatus) setBusyStatus("Zapamiętuję rozmowę…");
   try {
-    rawBytes = (localStorage.getItem("fabian_chats") || "").length;
+    const body = {
+      messages: conversation.messages
+        .filter((m) => m.role === "user" || m.role === "assistant")
+        .slice(-60)
+        .map((m) => ({ role: m.role, content: m.content }))
+    };
+    if (keyLooksValid(settings.apiKey)) body.apiKey = settings.apiKey;
+    const baseUrl = validBaseUrl(settings.baseUrl);
+    if (baseUrl) body.baseUrl = baseUrl;
+    const response = await fetch("/api/compact", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body)
+    });
+    const data = await response.json().catch(() => null);
+    if (!response.ok || !data || typeof data.summary !== "string" || !data.summary.trim()) {
+      return false;
+    }
+    conversation.memory = {
+      text: data.summary.trim().slice(0, 4000),
+      count: conversation.messages.length,
+      updatedAt: Date.now()
+    };
+    conversation.updatedAt = Date.now();
+    saveChats(state);
+    renderSidebar();
+    return true;
   } catch {
-    rawBytes = 0;
+    return false;
+  } finally {
+    compacting = false;
+    if (showStatus) clearBusyStatus();
   }
-  const sorted = [...state.conversations].sort((a, b) => b.updatedAt - a.updatedAt);
-  const totalMessages = sorted.reduce((sum, c) => sum + c.messages.length, 0);
-  const kb = (rawBytes / 1024).toFixed(1);
-  elements.memoryStats.textContent =
-    sorted.length + " rozmów · " + totalMessages + " wiadomości · " + kb + " KB";
-  elements.memoryList.innerHTML = "";
-  for (const conversation of sorted.slice(0, 20)) {
-    const row = document.createElement("div");
-    row.className = "memoryRow";
-    const title = document.createElement("span");
-    title.className = "memoryRowTitle";
-    title.textContent = conversation.title;
-    const meta = document.createElement("span");
-    meta.className = "memoryRowMeta";
-    meta.textContent = conversation.messages.length + " wiad · " + formatTime(conversation.updatedAt);
-    row.appendChild(title);
-    row.appendChild(meta);
-    elements.memoryList.appendChild(row);
-  }
+}
+
+function maybeAutoCompact(conversation) {
+  if (!conversation) return;
+  const total = conversation.messages.length;
+  if (total < 15) return;
+  const mem = conversation.memory;
+  if (mem && total - mem.count < 15) return;
+  compactConversation(conversation, false);
 }
 
 function openSettings() {
@@ -825,7 +1177,6 @@ function openSettings() {
     elements.settingsPersonaMode.value =
       settings.personaMode === "replace" ? "replace" : "append";
   }
-  renderMemoryPanel();
   elements.settingsOverlay.hidden = false;
 }
 
@@ -838,6 +1189,34 @@ if (elements.chatStatus) {
     if (elements.chatStatus.classList.contains("warn")) {
       elements.chatStatus.hidden = true;
     }
+  });
+}
+
+if (elements.memoryModalClose) {
+  elements.memoryModalClose.addEventListener("click", closeMemoryModal);
+}
+if (elements.memoryOverlay) {
+  elements.memoryOverlay.addEventListener("click", (event) => {
+    if (event.target === elements.memoryOverlay) closeMemoryModal();
+  });
+}
+if (elements.memoryForget) {
+  elements.memoryForget.addEventListener("click", () => {
+    const conversation = state.conversations.find((x) => x.id === memoryTargetId);
+    if (!conversation) return;
+    delete conversation.memory;
+    saveChats(state);
+    renderMemoryModal(conversation);
+  });
+}
+if (elements.memoryRefresh) {
+  elements.memoryRefresh.addEventListener("click", async () => {
+    const conversation = state.conversations.find((x) => x.id === memoryTargetId);
+    if (!conversation) return;
+    elements.memoryRefresh.disabled = true;
+    await compactConversation(conversation, true);
+    elements.memoryRefresh.disabled = false;
+    renderMemoryModal(conversation);
   });
 }
 
@@ -906,6 +1285,9 @@ document.addEventListener("keydown", (event) => {
     closeMenu();
     closeSidebar();
     closeSettingsModal();
+    closeMemoryModal();
+    const previewEl = document.getElementById("previewOverlay");
+    if (previewEl) previewEl.hidden = true;
   }
 });
 

@@ -88,13 +88,31 @@ export function sanitizeAttachments(raw) {
   return clean;
 }
 
-export function composeMessages(messages, attachments) {
-  if (!attachments.length) return messages;
-  const last = messages[messages.length - 1];
-  if (!last || last.role !== "user") return messages;
+export function sanitizeMemory(raw) {
+  if (typeof raw !== "string") return null;
+  const trimmed = raw.trim().slice(0, 4000);
+  return trimmed || null;
+}
+
+export function composeMessages(messages, attachments, memory) {
+  let result = messages;
+  if (memory) {
+    result = [
+      {
+        role: "user",
+        content:
+          "[Podsumowanie wcześniejszej części naszej rozmowy - traktuj je jak swoją pamięć]\n" +
+          memory
+      },
+      ...result
+    ];
+  }
+  if (!attachments.length) return result;
+  const last = result[result.length - 1];
+  if (!last || last.role !== "user") return result;
   const parts = [last.content, "", "Załączone pliki:"];
   for (const att of attachments) {
     parts.push("### " + att.name + "\n" + att.content);
   }
-  return [...messages.slice(0, -1), { role: "user", content: parts.join("\n") }];
+  return [...result.slice(0, -1), { role: "user", content: parts.join("\n") }];
 }

@@ -24,6 +24,16 @@ function isValidMessage(message) {
   );
 }
 
+function isValidMemory(memory) {
+  return (
+    memory &&
+    typeof memory === "object" &&
+    typeof memory.text === "string" &&
+    typeof memory.count === "number" &&
+    typeof memory.updatedAt === "number"
+  );
+}
+
 function isValidConversation(conversation) {
   return (
     conversation &&
@@ -31,7 +41,8 @@ function isValidConversation(conversation) {
     typeof conversation.id === "string" &&
     typeof conversation.title === "string" &&
     Array.isArray(conversation.messages) &&
-    conversation.messages.every(isValidMessage)
+    conversation.messages.every(isValidMessage) &&
+    (conversation.memory === undefined || isValidMemory(conversation.memory))
   );
 }
 

@@ -5,6 +5,7 @@ import {
   composeMessages,
   limits,
   sanitizeAttachments,
+  sanitizeMemory,
   sanitizePersona,
   validateChatBody
 } from "../lib/validate.js";
@@ -117,6 +118,7 @@ export async function handleChat(req, res) {
 
   try {
     const persona = sanitizePersona(body.persona);
+    const memory = sanitizeMemory(body.memory);
     const rawAttachments = sanitizeAttachments(body.attachments);
     const attachments = [];
     for (const att of rawAttachments) {
@@ -133,7 +135,11 @@ export async function handleChat(req, res) {
         attachments.push(att);
       }
     }
-    const providerMessages = composeMessages(check.messages, attachments.slice(0, 12));
+    const providerMessages = composeMessages(
+      check.messages,
+      attachments.slice(0, 12),
+      memory
+    );
     const stream = await streamChat(resolved.client, providerMessages, persona);
     for await (const chunk of stream) {
       const delta = chunk?.choices?.[0]?.delta?.content ?? "";
@@ -148,4 +154,56 @@ export async function handleChat(req, res) {
     );
   }
   res.end();
+}
+
+export async function handleCompact(req, res) {
+  if (!rateLimit(clientIp(req))) {
+    sendJson(res, 429, { error: "Zbyt wiele żądań. Odczekaj chwilę i spróbuj ponownie." });
+    return;
+  }
+  let body;
+  try {
+    body = await readJsonBody(req, limits.maxBodyBytes);
+  } catch {
+    sendJson(res, 400, { error: "Nieprawidłowe żądanie." });
+    return;
+  }
+  const check = validateChatBody(body);
+  if (!check.ok) {
+    sendJson(res, 400, { error: check.error });
+    return;
+  }
+  const resolved = resolveClient(body);
+  if (resolved.error) {
+    sendJson(res, 400, { error: resolved.error });
+    return;
+  }
+  if (!resolved.client) {
+    sendJson(res, 503, { error: "Usługa AI jest chwilowo niedostępna." });
+    return;
+  }
+  try {
+    const slice = check.messages.slice(-60);
+    const completion = await resolved.client.chat.completions.create({
+      model: "groq/compound-mini",
+      messages: [
+        {
+          role: "system",
+          content:
+            "Streszczasz rozmowę do pamięci asystenta. Wypisz po polsku 5-10 najważniejszych punktów: kim jest rozmówca, o czym rozmawiali, jakie decyzje i fakty padły. Same punkty, bez wstępu i zakończenia."
+        },
+        ...slice
+      ],
+      stream: false,
+      max_tokens: 600
+    });
+    const summary = completion?.choices?.[0]?.message?.content?.trim();
+    if (!summary) {
+      sendJson(res, 502, { error: "Nie udało się zapamiętać. Spróbuj ponownie." });
+      return;
+    }
+    sendJson(res, 200, { summary });
+  } catch {
+    sendJson(res, 502, { error: "Nie udało się zapamiętać. Spróbuj ponownie." });
+  }
 }
