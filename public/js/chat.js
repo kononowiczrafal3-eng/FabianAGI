@@ -1547,6 +1547,61 @@ function updateIdentity() {
   renderAll();
 }
 
+if (elements.settingsBtn) {
+  elements.settingsBtn.addEventListener("click", openSettings);
+}
+if (elements.settingsClose) {
+  elements.settingsClose.addEventListener("click", closeSettingsModal);
+}
+if (elements.settingsOverlay) {
+  elements.settingsOverlay.addEventListener("click", (event) => {
+    if (event.target === elements.settingsOverlay) closeSettingsModal();
+  });
+}
+if (elements.settingsSave) {
+  elements.settingsSave.addEventListener("click", () => {
+    settings = {
+      apiKey: elements.settingsApiKey.value.trim(),
+      baseUrl: elements.settingsBaseUrl.value.trim(),
+      name: elements.settingsName.value.trim().slice(0, 30),
+      personality: elements.settingsPersonality.value.trim().slice(0, 5000),
+      personaMode:
+        elements.settingsPersonaMode &&
+        elements.settingsPersonaMode.value === "replace"
+          ? "replace"
+          : "append",
+      model: elements.settingsModel ? elements.settingsModel.value : "groq/compound-mini",
+      botIcon: elements.settingsBotIcon ? validBaseUrl(elements.settingsBotIcon.value) : ""
+    };
+    if (!keyLooksValid(settings.apiKey)) settings.apiKey = "";
+    settings.baseUrl = validBaseUrl(settings.baseUrl);
+    if (
+      defaultPersonality &&
+      settings.personality.trim() === defaultPersonality.trim()
+    ) {
+      settings.personality = "";
+    }
+    persistSettings();
+    closeSettingsModal();
+    updateIdentity();
+    updateIndicators();
+  });
+}
+if (elements.settingsClear) {
+  elements.settingsClear.addEventListener("click", () => {
+    settings = { apiKey: "", baseUrl: "", name: "", personality: "", personaMode: "append", model: "groq/compound-mini", botIcon: "" };
+    persistSettings();
+    elements.settingsApiKey.value = "";
+    elements.settingsBaseUrl.value = "";
+    elements.settingsName.value = "";
+    elements.settingsPersonality.value = "";
+    if (elements.settingsPersonaMode) elements.settingsPersonaMode.value = "append";
+    if (elements.settingsModel) elements.settingsModel.value = "groq/compound-mini";
+    if (elements.settingsBotIcon) elements.settingsBotIcon.value = "";
+    updateIdentity();
+  });
+}
+
 renderAttachRow();
 renderAll();
 updateCounter();
