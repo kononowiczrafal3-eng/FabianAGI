@@ -47,3 +47,11 @@ jedynie w zapytaniach do wybranego API. Bez własnego klucza używany jest
 klucz platformy z GROQ_API_KEY.
 
 Wiadomości użytkownika są ograniczone do 100 znaków (UI i serwer).
+
+## Panel administracyjny (/admin)
+
+Ustaw zmienną ADMIN_TOKEN (min. 20 znaków) w Railway. Wejdź na /admin,
+zaloguj się hasłem - zobaczysz logi zapytań: IP, model, persona, fragment
+ostatniej wiadomości, czas odpowiedzi i błędy. Logi trzymane lokalnie
+w data/events.jsonl (poza katalogiem public - nie są serwowane),
+retencja 30 dni, opisane na stronie Prywatność.

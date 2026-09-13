@@ -4,6 +4,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { loadEnv } from "./src/lib/env.js";
 import { handleChat, handleCompact } from "./src/routes/chat.js";
+import { handleAdmin, handleAdminLogin } from "./src/routes/admin.js";
 import { FABIAN_PERSONALITY } from "./src/lib/groq.js";
 
 loadEnv();
@@ -91,6 +92,14 @@ const server = http.createServer(async (req, res) => {
       res.end(JSON.stringify({ name: "Fabian", personality: FABIAN_PERSONALITY }));
       return;
     }
+    if (url.pathname === "/admin" && req.method === "GET") {
+      await handleAdmin(req, res);
+      return;
+    }
+    if (url.pathname === "/admin/login" && req.method === "POST") {
+      await handleAdminLogin(req, res);
+      return;
+    }
     if (url.pathname === "/api/compact" && req.method === "POST") {
       await handleCompact(req, res);
       return;
@@ -112,7 +121,8 @@ const server = http.createServer(async (req, res) => {
       return;
     }
     serveStatic(url.pathname === "/" ? "/index.html" : url.pathname, res);
-  } catch {
+  } catch (err) {
+    console.error("SERVER ERROR:", err);
     if (!res.headersSent) {
       securityHeaders(res);
       res.writeHead(500, { "Content-Type": "application/json; charset=utf-8" });

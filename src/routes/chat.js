@@ -1,5 +1,6 @@
 import { createGroqClient, streamChat } from "../lib/groq.js";
 import { rateLimit } from "../lib/rateLimit.js";
+import { logEvent } from "../lib/audit.js";
 import { extractTextFiles } from "../lib/zip.js";
 import {
   composeMessages,
@@ -114,6 +115,20 @@ export async function handleChat(req, res) {
     return;
   }
 
+  const model = sanitizeModel(body.model);
+  const persona = sanitizePersona(body.persona);
+  const lastUserMsg = [...check.messages].reverse().find((m) => m.role === "user");
+  const startedAt = Date.now();
+  const auditBase = {
+    ip: clientIp(req),
+    model: model || "groq/compound-mini",
+    persona: persona && persona.name ? persona.name : "Fabian",
+    personaMode: persona && persona.mode ? persona.mode : "append",
+    msgs: check.messages.length,
+    lastUser: lastUserMsg ? lastUserMsg.content.slice(0, 300) : "",
+    attachments: Array.isArray(body.attachments) ? body.attachments.length : 0
+  };
+
   res.writeHead(200, {
     "Content-Type": "text/event-stream; charset=utf-8",
     "Cache-Control": "no-cache, no-transform",
@@ -131,7 +146,6 @@ export async function handleChat(req, res) {
   res.on("close", () => clearInterval(heartbeat));
 
   try {
-    const persona = sanitizePersona(body.persona);
     const memory = sanitizeMemory(body.memory);
     const rawAttachments = sanitizeAttachments(body.attachments);
     const attachments = [];
@@ -154,7 +168,6 @@ export async function handleChat(req, res) {
       attachments.slice(0, 12),
       memory
     );
-    const model = sanitizeModel(body.model);
     const stream = await streamChat(resolved.client, providerMessages, persona, model);
     for await (const chunk of stream) {
       const delta = chunk?.choices?.[0]?.delta?.content ?? "";
@@ -163,10 +176,12 @@ export async function handleChat(req, res) {
       }
     }
     res.write("data: [DONE]\n\n");
+    logEvent({ ...auditBase, durationMs: Date.now() - startedAt });
   } catch {
     res.write(
       "data: " + JSON.stringify({ error: "Nie udało się uzyskać odpowiedzi. Spróbuj ponownie." }) + "\n\n"
     );
+    logEvent({ ...auditBase, durationMs: Date.now() - startedAt, error: true });
   }
   res.end();
 }
