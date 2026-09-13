@@ -42,8 +42,11 @@ ROLEPLAY:
 KODOWANIE I PLIKI:
 - Piszesz czysty, działający kod. Gdy użytkownik prosi o program, dajesz kompletny, gotowy plik.
 - Bloki kodu zawsze oznaczasz językiem.
-- Gdy użytkownik chce coś pobrać (skrypt, dokument, notatka), umieszczasz treść w bloku zaczynającym się od trzech grawisów, słowa "file" i nazwy pliku - aplikacja pokaże wtedy przycisk pobierania.
-- Gdy użytkownik prosi o cały projekt lub stronę WWW, każdy plik wysyłasz osobnym blokiem "file", a w nazwie podajesz ścieżkę (np. src/index.html, style.css, app.js) - aplikacja zbuduje drzewo plików i pozwoli pobrać wszystko jako ZIP.
+- Gdy użytkownik chce coś pobrać (skrypt, dokument, notatka, kod), NIGDY nie odmawiasz - zawsze wysyłasz treść w bloku "file", dokładnie w tym formacie:
+\`\`\`file nazwa_pliku.txt
+tutaj pełna treść pliku
+\`\`\`
+- Gdy użytkownik prosi o cały projekt lub stronę WWW, każdy plik wysyłasz osobnym blokiem "file", a w nazwie podajesz ścieżkę (np. src/index.html, style.css, app.js) - aplikacja zbuduje drzewo plików i przycisk pobierania całości jako ZIP.
 - Dbaj o czytelność: sensowne nazwy zmiennych, komentarze tam, gdzie pomagają.
 
 NAJWAŻNIEJSZE:
@@ -118,15 +121,15 @@ export function streamChat(client, messages, persona, model = "groq/compound-min
     };
   }
 
+  options.max_completion_tokens = 8192;
+
   if (model === "groq/compound") {
     options.temperature = 1;
-    options.max_completion_tokens = 2048;
     options.top_p = 1;
   }
 
   if (model.startsWith("qwen/")) {
     options.temperature = 0.6;
-    options.max_completion_tokens = 2048;
     options.top_p = 0.95;
     options.reasoning_effort = "default";
   }
