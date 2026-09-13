@@ -49,6 +49,7 @@ const elements = {
   composerHint: document.getElementById("composerHint"),
   chatStatus: document.getElementById("chatStatus"),
   settingsModel: document.getElementById("settingsModel"),
+  settingsBotIcon: document.getElementById("settingsBotIcon"),
   memoryClear: document.getElementById("memoryClear"),
   memoryOverlay: document.getElementById("memoryOverlay"),
   memoryModalClose: document.getElementById("memoryModalClose"),
@@ -81,7 +82,8 @@ function loadSettings() {
     name: "",
     personality: "",
     personaMode: "append",
-    model: "groq/compound-mini"
+    model: "groq/compound-mini",
+    botIcon: ""
   };
   try {
     const raw = localStorage.getItem(settingsKey);
@@ -94,7 +96,8 @@ function loadSettings() {
       name: asCleanString(data.name),
       personality: asCleanString(data.personality),
       personaMode: data.personaMode === "replace" ? "replace" : "append",
-      model: typeof data.model === "string" ? data.model : "groq/compound-mini"
+      model: typeof data.model === "string" ? data.model : "groq/compound-mini",
+      botIcon: asCleanString(data.botIcon)
     };
   } catch {
     return fallback;
@@ -684,13 +687,29 @@ function renderAttachRow() {
   });
 }
 
+function fillBotAvatar(avatarEl) {
+  const letter = (assistantName().charAt(0) || "F").toUpperCase();
+  avatarEl.textContent = letter;
+  const url = settings.botIcon.trim();
+  if (url) {
+    const img = document.createElement("img");
+    img.src = url;
+    img.alt = "";
+    img.addEventListener("error", () => img.remove());
+    avatarEl.appendChild(img);
+  }
+}
+
 function buildMessageNode(role, content, attachments) {
   const node = document.createElement("div");
   node.className = "msg " + (role === "user" ? "msgUser" : "msgFabian");
   const avatar = document.createElement("div");
   avatar.className = "msgAvatar";
-  avatar.textContent =
-    role === "user" ? "Ty" : assistantName().charAt(0).toUpperCase();
+  if (role === "user") {
+    avatar.textContent = "Ty";
+  } else {
+    fillBotAvatar(avatar);
+  }
   const body = document.createElement("div");
   body.className = "msgBody";
   const name = document.createElement("div");
@@ -761,6 +780,76 @@ function finalizeAssistant(textEl, full) {
   }
 }
 
+function attachMessageActions(node, conversation, index) {
+  const message = conversation.messages[index];
+  if (!message) return;
+  const actions = document.createElement("div");
+  actions.className = "msgActions";
+  const addBtn = (label, title, fn, danger) => {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "msgActionBtn" + (danger ? " danger" : "");
+    btn.textContent = label;
+    btn.title = title;
+    btn.setAttribute("aria-label", title);
+    btn.addEventListener("click", fn);
+    actions.appendChild(btn);
+  };
+  if (message.role === "assistant") {
+    addBtn("\u21bb", "Wygeneruj odpowiedź ponownie", () => {
+      regenerateFrom(conversation, index);
+    });
+  }
+  if (message.role === "user") {
+    addBtn("\u21a9", "Usuń nowsze wiadomości i wróć do tego punktu", () => {
+      confirmDialog(
+        "Wrócić do tego punktu?",
+        "Wszystkie nowsze wiadomości zostaną trwale usunięte.",
+        "Wróć"
+      ).then((yes) => {
+        if (!yes) return;
+        conversation.messages = conversation.messages.slice(0, index + 1);
+        conversation.updatedAt = Date.now();
+        saveChats(state);
+        renderAll();
+      });
+    });
+  }
+  addBtn("\u270e", "Edytuj wiadomość", () => {
+    const next = window.prompt("Edytuj wiadomość:", message.content);
+    if (next === null) return;
+    const trimmed = next.trim();
+    if (!trimmed || trimmed.length > 12000) return;
+    message.content = trimmed;
+    conversation.updatedAt = Date.now();
+    saveChats(state);
+    renderAll();
+  });
+  addBtn("\u00d7", "Usuń wiadomość", () => {
+    conversation.messages.splice(index, 1);
+    conversation.updatedAt = Date.now();
+    saveChats(state);
+    renderAll();
+  }, true);
+  const body = node.querySelector(".msgBody");
+  if (body) body.appendChild(actions);
+}
+
+function regenerateFrom(conversation, assistantIndex) {
+  const target = conversation.messages[assistantIndex];
+  if (!target || target.role !== "assistant") return;
+  conversation.messages = conversation.messages.slice(0, assistantIndex);
+  conversation.updatedAt = Date.now();
+  saveChats(state);
+  renderSidebar();
+  elements.chatEmpty.style.display = "none";
+  const [textEl, node] = createPlaceholder();
+  sending = true;
+  if (elements.sendBtn) elements.sendBtn.disabled = true;
+  setBusyStatus("Fabian pisze\u2026");
+  requestAssistant(conversation, textEl, node, []);
+}
+
 function renderMessages() {
   const conversation = getActiveConversation(state);
   elements.messages.innerHTML = "";
@@ -771,15 +860,16 @@ function renderMessages() {
   }
   elements.chatEmpty.style.display = "none";
   elements.chatTitle.textContent = conversation.title;
-  for (const message of conversation.messages) {
+  conversation.messages.forEach((message, index) => {
     const { node, text } = buildMessageNode(
       message.role,
       message.content,
       message.attachments
     );
     if (message.role === "assistant") finalizeAssistant(text, message.content);
+    attachMessageActions(node, conversation, index);
     elements.messages.appendChild(node);
-  }
+  });
   forceScroll();
 }
 
@@ -1217,6 +1307,9 @@ function openSettings() {
   if (elements.settingsModel) {
     elements.settingsModel.value = settings.model || "groq/compound-mini";
   }
+  if (elements.settingsBotIcon) {
+    elements.settingsBotIcon.value = settings.botIcon;
+  }
   elements.settingsOverlay.hidden = false;
 }
 
@@ -1289,7 +1382,8 @@ elements.settingsSave.addEventListener("click", () => {
       elements.settingsPersonaMode.value === "replace"
         ? "replace"
         : "append",
-    model: elements.settingsModel ? elements.settingsModel.value : "groq/compound-mini"
+    model: elements.settingsModel ? elements.settingsModel.value : "groq/compound-mini",
+    botIcon: elements.settingsBotIcon ? validBaseUrl(elements.settingsBotIcon.value) : ""
   };
   if (!keyLooksValid(settings.apiKey)) settings.apiKey = "";
   settings.baseUrl = validBaseUrl(settings.baseUrl);
@@ -1305,7 +1399,7 @@ elements.settingsSave.addEventListener("click", () => {
   updateIndicators();
 });
 elements.settingsClear.addEventListener("click", () => {
-  settings = { apiKey: "", baseUrl: "", name: "", personality: "", personaMode: "append", model: "groq/compound-mini" };
+  settings = { apiKey: "", baseUrl: "", name: "", personality: "", personaMode: "append", model: "groq/compound-mini", botIcon: "" };
   persistSettings();
   elements.settingsApiKey.value = "";
   elements.settingsBaseUrl.value = "";
@@ -1313,6 +1407,7 @@ elements.settingsClear.addEventListener("click", () => {
   elements.settingsPersonality.value = "";
   if (elements.settingsPersonaMode) elements.settingsPersonaMode.value = "append";
   if (elements.settingsModel) elements.settingsModel.value = "groq/compound-mini";
+  if (elements.settingsBotIcon) elements.settingsBotIcon.value = "";
   updateIdentity();
 });
 
@@ -1337,6 +1432,8 @@ function updateIdentity() {
   if (elements.emptyHeading) {
     elements.emptyHeading.textContent = "Cześć, jestem " + assistantName() + ".";
   }
+  const emptyAvatar = document.querySelector(".emptyAvatar");
+  if (emptyAvatar) fillBotAvatar(emptyAvatar);
   renderAll();
 }
 

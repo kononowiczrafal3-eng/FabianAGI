@@ -12,7 +12,7 @@
   --orangeHover: #ff7d38;
   --orangeSoft: rgba(255, 106, 31, 0.14);
   --red: #e5484d;
-  --radius: 8px;
+  --radius: 4px;
   --sans: "Roboto", sans-serif;
 }
 
@@ -104,8 +104,7 @@ code {
   position: sticky;
   top: 0;
   z-index: 60;
-  background: rgba(19, 19, 21, 0.9);
-  backdrop-filter: blur(8px);
+  background: rgba(19, 19, 21, 0.94);
   border-bottom: 1px solid var(--borderSoft);
 }
 .navWrap { display: flex; align-items: center; gap: 26px; height: 58px; }
@@ -509,7 +508,13 @@ code {
   font-size: 13px;
   line-height: 1.6;
 }
-.md pre.mdCode code { background: none; border: none; padding: 0; font-size: inherit; }
+.md pre.mdCode code {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: inherit;
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
 .md code.mdInline {
   background: var(--panel2);
   border: 1px solid var(--border);
@@ -562,6 +567,9 @@ code {
   width: min(430px, 100%);
   padding: 20px;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  max-height: 92dvh;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 .modalHead { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
 .modalHead h2 { font-size: 16px; }
@@ -825,24 +833,20 @@ code {
 @keyframes taglineSwap {
   0% {
     opacity: 1;
-    filter: blur(0);
     text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8), 0 0 14px rgba(255, 106, 31, 0.25);
   }
   38% {
     opacity: 0;
-    filter: blur(5px);
     transform: translateY(4px);
     text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8), 0 0 34px rgba(255, 106, 31, 0.95), 0 0 70px rgba(255, 106, 31, 0.55);
   }
   55% {
     opacity: 0;
-    filter: blur(5px);
     transform: translateY(-4px);
     text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8), 0 0 34px rgba(255, 106, 31, 0.95);
   }
   100% {
     opacity: 1;
-    filter: blur(0);
     transform: none;
     text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8), 0 0 14px rgba(255, 106, 31, 0.25);
   }
@@ -950,9 +954,8 @@ code {
   display: flex;
   align-items: center;
   gap: 12px;
-  background: var(--bg2);
-  border: 1px solid var(--border);
-  border-radius: 8px;
+  background: var(--panel);
+  border-radius: var(--radius);
   padding: 10px 14px;
 }
 .fileCardName {
@@ -1091,4 +1094,125 @@ code {
   outline: 2px dashed rgba(255, 106, 31, 0.65);
   outline-offset: -8px;
   border-radius: var(--radius);
+}
+
+/* optymalizacje renderowania */
+.msg, .modal, .chatMenu, .scrollPill, #heroTagline {
+  will-change: opacity, transform;
+}
+
+/* dialog potwierdzenia */
+.confirmModal {
+  text-align: center;
+  width: min(360px, 100%);
+  padding: 26px 22px 22px;
+}
+.confirmIcon {
+  width: 44px;
+  height: 44px;
+  color: var(--red);
+  margin: 0 auto 10px;
+  display: block;
+}
+.confirmModal h2 { font-size: 18px; margin-bottom: 8px; }
+.confirmMsg {
+  color: var(--text2);
+  font-size: 13.5px;
+  line-height: 1.6;
+  margin-bottom: 22px;
+}
+.confirmActions { display: flex; justify-content: center; gap: 10px; }
+.confirmDanger {
+  background: transparent;
+  border: 1px solid var(--red);
+  color: var(--red);
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+.confirmDanger:hover { background: var(--red); border-color: var(--red); color: #fff; }
+/* akcje wiadomosci */
+.msg { position: relative; }
+.msgActions {
+  position: absolute;
+  top: 0;
+  right: 0;
+  display: flex;
+  gap: 2px;
+  opacity: 0;
+  transition: opacity 0.12s ease;
+}
+.msg:hover .msgActions { opacity: 1; }
+.msgActionBtn {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text3);
+  font-size: 12px;
+  line-height: 1;
+  width: 24px;
+  height: 22px;
+  cursor: pointer;
+  transition: color 0.12s ease, border-color 0.12s ease;
+}
+.msgActionBtn:hover { color: var(--text); border-color: #3d444d; }
+.msgActionBtn.danger:hover { color: var(--red); border-color: var(--red); }
+@media (hover: none) {
+  .msgActions { opacity: 0.6; }
+}
+
+/* ikona bota w awatarze */
+.msgAvatar { position: relative; overflow: hidden; }
+.msgAvatar img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.emptyAvatar { position: relative; overflow: hidden; }
+.emptyAvatar img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* mobile: akcje wiadomosci pod trescia, wieksze cele dotyku */
+@media (hover: none), (max-width: 640px) {
+  .msgActions {
+    position: static;
+    opacity: 1;
+    margin-top: 6px;
+    justify-content: flex-end;
+  }
+  .msgActionBtn {
+    width: 30px;
+    height: 28px;
+    font-size: 13px;
+  }
+  .fileCard { flex-wrap: wrap; }
+  .fileCardName { flex-basis: 100%; }
+}
+
+/* bezpieczny obszar na dole (iPhone home indicator) */
+.chatComposer {
+  padding-bottom: max(12px, env(safe-area-inset-bottom, 12px));
+}
+
+/* czat nie ucieka pod notchy */
+.appMode .appMain {
+  padding-left: env(safe-area-inset-left, 0);
+  padding-right: env(safe-area-inset-right, 0);
+}
+
+/* bardzo waskie ekrany: kompaktowy topbar */
+@media (max-width: 480px) {
+  .chatTitle { max-width: 38vw; }
+  .chatStatus { font-size: 10.5px; padding: 2px 9px; }
+  .messages { width: 96%; gap: 12px; }
+  .md pre.mdCode { font-size: 12px; }
+  .modalActions { flex-direction: column-reverse; }
+  .modalActions .btn { width: 100%; }
+  .confirmActions { flex-direction: column-reverse; }
+  .confirmActions .btn { width: 100%; }
 }
