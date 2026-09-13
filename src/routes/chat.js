@@ -1,6 +1,6 @@
 import { createGroqClient, streamChat } from "../lib/groq.js";
 import { rateLimit } from "../lib/rateLimit.js";
-import { logEvent } from "../lib/audit.js";
+import { isOptedOut, logEvent } from "../lib/audit.js";
 import { extractTextFiles } from "../lib/zip.js";
 import {
   composeMessages,
@@ -181,12 +181,16 @@ export async function handleChat(req, res) {
     }
     res.write("data: [DONE]\n\n");
     auditBase.response = responseText.slice(0, 20000);
-    logEvent({ ...auditBase, durationMs: Date.now() - startedAt });
+    if (!isOptedOut(auditBase.ip)) {
+      logEvent({ ...auditBase, durationMs: Date.now() - startedAt });
+    }
   } catch {
     res.write(
       "data: " + JSON.stringify({ error: "Nie udało się uzyskać odpowiedzi. Spróbuj ponownie." }) + "\n\n"
     );
-    logEvent({ ...auditBase, durationMs: Date.now() - startedAt, error: true });
+    if (!isOptedOut(auditBase.ip)) {
+      logEvent({ ...auditBase, durationMs: Date.now() - startedAt, error: true });
+    }
   }
   res.end();
 }

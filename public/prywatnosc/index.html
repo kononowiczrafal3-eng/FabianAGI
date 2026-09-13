@@ -57,8 +57,41 @@
             <p>Z rozmów prowadzonych z Fabianem zapisujemy na serwerze: adres IP, datę i godzinę, wybrany model i personę, liczbę wiadomości w rozmowie oraz pierwsze 300 znaków ostatniej wiadomości wysłanej do AI. Nie zapisujemy pełnych treści rozmów ani odpowiedzi modelu.</p>
             <p>Cel: bezpieczeństwo usługi, ochrona przed nadużyciami, diagnostyka. Podstawa prawna: prawnie uzasadniony interes administratora (art. 6 ust. 1 lit. f RODO). Logi są automatycznie usuwane po 30 dniach i dostępne wyłącznie dla administratora serwisu - po zalogowaniu hasłem w panelu administracyjnym.</p>
 
-            <h2>Administrator danych i kontakt</h2>
-            <p>Administratorem danych jest właściciel Serwisu (dane identyfikujące w <a href="/regulamin">Regulaminie</a>, sekcja Kontakt). W sprawach danych i logów pisz: <a href="mailto:kontakt@fabianagi.dev">kontakt@fabianagi.dev</a>. Masz prawo wnieść sprzeciw wobec logowania opartego na prawnie uzasadnionym interesie, a także skargę do Prezesa UODO.</p>
+            <h2>Twoje dane - samoobsługa</h2>
+            <p>Logi przypisujemy do adresu IP. Wpisz poniżej swój adres IP (znajdziesz go np. na whatismyip.com) i wybierz działanie. Każdy wniosek jest zapisywany w logach razem z adresem IP.</p>
+            <div class="privacyTool">
+              <div class="privacyRow">
+                <input type="text" id="privacyIp" placeholder="Twój adres IP, np. 83.10.55.120" aria-label="Twój adres IP">
+                <button class="btn btnSecondary btnSm" type="button" onclick="privacyAction('delete')">Usuń moje dane</button>
+                <button class="btn btnSecondary btnSm" type="button" onclick="privacyAction('optout')">Wyłącz logowanie mojego IP</button>
+                <button class="btn btnSecondary btnSm" type="button" onclick="privacyAction('optin')">Przywróć logowanie</button>
+              </div>
+              <p class="privacyMsg mono" id="privacyMsg"></p>
+            </div>
+            <p>Skutki: „Usuń moje dane" - natychmiastowe usunięcie istniejących logów z Twoim adresem IP (sam wniosek zostaje zapisany). „Wyłącz logowanie" - Twój adres IP nie będzie zapisywany w nowych logach do momentu cofnięcia zgody. Dane przetwarzane są automatycznie, bez udziału operatora.</p>
+            <p>Masz prawo wnieść sprzeciw wobec logowania oraz skargę do Prezesa UODO. Administratorem danych jest operator Serwisu (osoba prywatna, patrz <a href="/regulamin">Regulamin</a>).</p>
+            <script>
+            async function privacyAction(action) {
+              const ip = document.getElementById("privacyIp").value.trim();
+              const msg = document.getElementById("privacyMsg");
+              if (!ip) { msg.textContent = "Wpisz adres IP."; return; }
+              msg.textContent = "Przetwarzanie...";
+              try {
+                const res = await fetch("/api/privacy", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ ip, action })
+                });
+                const data = await res.json();
+                if (!res.ok) { msg.textContent = data.error || "Błąd."; return; }
+                if (action === "delete") msg.textContent = "Usunięto " + data.removed + " wpisów. Wniosek zapisany w logach.";
+                if (action === "optout") msg.textContent = "Logowanie Twojego IP wyłączone.";
+                if (action === "optin") msg.textContent = "Logowanie Twojego IP przywrócone.";
+              } catch {
+                msg.textContent = "Błąd połączenia.";
+              }
+            }
+            </script>
 
             <h2>Dodatkowe informacje</h2>
             <p>English version: <a href="/privacy">Privacy (EN)</a></p>
@@ -84,6 +117,6 @@
       </nav>
     </div>
   </footer>
-  <script src="/js/main.js?v=1.4.0"></script>
+  <script src="/js/main.js?v=1.7.0"></script>
 </body>
 </html>

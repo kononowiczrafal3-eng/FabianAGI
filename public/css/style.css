@@ -1258,3 +1258,59 @@ code {
   border-right: 6px solid var(--panel2);
 }
 .projectHeadActions { display: flex; gap: 8px; }
+
+/* przełącznik jezyka w rogu */
+.langFab {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: 120;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 42px;
+  height: 34px;
+  padding: 0 12px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  color: var(--text2);
+  font-family: var(--sans);
+  font-size: 12px;
+  font-weight: 600;
+  text-decoration: none;
+  letter-spacing: 0.04em;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+.langFab:hover {
+  color: var(--orange);
+  border-color: rgba(255, 106, 31, 0.55);
+  text-decoration: none;
+}
+
+/* samoobsluga danych */
+.privacyTool {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px 20px;
+  margin-bottom: 14px;
+}
+.privacyTool h3 { font-size: 15px; margin-bottom: 6px; }
+.privacyTool p { color: var(--text2); font-size: 13px; margin-bottom: 12px; }
+.privacyRow { display: flex; gap: 8px; flex-wrap: wrap; }
+.privacyRow input {
+  flex: 1;
+  min-width: 180px;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text);
+  font-family: ui-monospace, Menlo, monospace;
+  font-size: 13px;
+  padding: 8px 12px;
+  outline: none;
+}
+.privacyRow input:focus { border-color: rgba(255, 106, 31, 0.55); }
+.privacyMsg { font-size: 12.5px; margin-top: 10px; color: var(--text2); }

@@ -48,8 +48,41 @@
           <h2>Server logs</h2>
           <p>For conversations with Fabian we store on the server: your IP address, date and time, the selected model and persona, the number of messages in the conversation, and the first 300 characters of the last message sent to the AI. We do not store full conversation contents or model responses.</p>
           <p>Purpose: service security, abuse prevention and technical diagnostics. Legal basis: legitimate interest of the controller (Art. 6(1)(f) GDPR). Logs are automatically deleted after 30 days and are accessible only to the service operator, after password login to the admin panel.</p>
-          <h2>Controller and contact</h2>
-          <p>The controller of your data is the operator of the Service, a private individual acting under a pseudonym (see the <a href="/terms">Terms of Service</a>, Contact section). For data and log matters write to: <a href="mailto:kontakt@fabianagi.dev">kontakt@fabianagi.dev</a>. You have the right to object to logging based on legitimate interest and to lodge a complaint with the supervisory authority (in Poland: the President of the UODO).</p>
+          <h2>Your data - self service</h2>
+          <p>Logs are keyed to your IP address. Enter it below (find it e.g. at whatismyip.com) and choose an action. Every request is itself logged together with the IP address.</p>
+          <div class="privacyTool">
+            <div class="privacyRow">
+              <input type="text" id="privacyIp" placeholder="Your IP address, e.g. 83.10.55.120" aria-label="Your IP address">
+              <button class="btn btnSecondary btnSm" type="button" onclick="privacyAction('delete')">Delete my data</button>
+              <button class="btn btnSecondary btnSm" type="button" onclick="privacyAction('optout')">Opt my IP out</button>
+              <button class="btn btnSecondary btnSm" type="button" onclick="privacyAction('optin')">Re-enable logging</button>
+            </div>
+            <p class="privacyMsg mono" id="privacyMsg"></p>
+          </div>
+          <p>Effects: "Delete my data" - instantly removes existing log entries with your IP (the request itself stays in the logs). "Opt out" - your IP will not be stored in new logs until you re-enable. Processing is automatic, without the operator's involvement.</p>
+          <p>You have the right to object to logging and to lodge a complaint with the supervisory authority. The controller is the operator of the Service (a private individual, see the <a href="/terms">Terms of Service</a>).</p>
+          <script>
+          async function privacyAction(action) {
+            const ip = document.getElementById("privacyIp").value.trim();
+            const msg = document.getElementById("privacyMsg");
+            if (!ip) { msg.textContent = "Enter your IP address."; return; }
+            msg.textContent = "Processing...";
+            try {
+              const res = await fetch("/api/privacy", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ ip, action })
+              });
+              const data = await res.json();
+              if (!res.ok) { msg.textContent = data.error || "Error."; return; }
+              if (action === "delete") msg.textContent = "Removed " + data.removed + " entries. Request logged.";
+              if (action === "optout") msg.textContent = "Logging for your IP disabled.";
+              if (action === "optin") msg.textContent = "Logging for your IP re-enabled.";
+            } catch {
+              msg.textContent = "Connection error.";
+            }
+          }
+          </script>
         </article>
         <div class="pageLinks">
           <a class="textLink" href="/prywatnosc">← Polska wersja</a>
@@ -74,6 +107,6 @@
       </nav>
     </div>
   </footer>
-  <script src="/js/main.js?v=1.4.0"></script>
+  <script src="/js/main.js?v=1.7.0"></script>
 </body>
 </html>

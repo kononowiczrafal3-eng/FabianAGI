@@ -80,3 +80,56 @@ export function computeStats(events) {
   }
   return { total: events.length, last24h, uniqueIps: ips.size, errors, models };
 }
+
+const optoutsFile = path.join(dataDir, "optouts.json");
+
+export function isOptedOut(ip) {
+  try {
+    const list = JSON.parse(fs.readFileSync(optoutsFile, "utf8"));
+    return Array.isArray(list) && list.includes(ip);
+  } catch {
+    return false;
+  }
+}
+
+function saveOptouts(list) {
+  ensureDir();
+  fs.writeFileSync(optoutsFile, JSON.stringify(list, null, 2));
+}
+
+export function setOptout(ip, value) {
+  try {
+    let list = [];
+    try {
+      const raw = JSON.parse(fs.readFileSync(optoutsFile, "utf8"));
+      if (Array.isArray(raw)) list = raw;
+    } catch {
+      /* brak pliku */
+    }
+    const next = value ? Array.from(new Set([...list, ip])) : list.filter((x) => x !== ip);
+    saveOptouts(next);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export function deleteEventsByIp(ip) {
+  try {
+    const lines = fs.readFileSync(eventsFile, "utf8").split("\n").filter(Boolean);
+    const kept = lines.filter((line) => {
+      try {
+        return JSON.parse(line).ip !== ip;
+      } catch {
+        return true;
+      }
+    });
+    if (kept.length !== lines.length) {
+      fs.writeFileSync(eventsFile, kept.join("\n") + "\n");
+      return lines.length - kept.length;
+    }
+    return 0;
+  } catch {
+    return -1;
+  }
+}

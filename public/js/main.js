@@ -48,3 +48,44 @@ if (
     }, 950);
   }, 4200);
 }
+
+(function () {
+  const map = {
+    "/": "/en/",
+    "/index.html": "/en/",
+    "/wyniki": "/en/results",
+    "/wyniki/": "/en/results",
+    "/prywatnosc": "/privacy",
+    "/prywatnosc/": "/privacy",
+    "/regulamin": "/terms",
+    "/regulamin/": "/terms",
+    "/en/": "/",
+    "/en/results": "/wyniki",
+    "/en/results/": "/wyniki",
+    "/privacy": "/prywatnosc",
+    "/privacy/": "/prywatnosc",
+    "/terms": "/regulamin",
+    "/terms/": "/regulamin"
+  };
+  const fab = document.createElement("a");
+  fab.className = "langFab";
+  fab.title = "Switch language / Zmień język";
+  const path = window.location.pathname;
+  if (path === "/fabian" || path === "/fabian/") {
+    fab.textContent = document.documentElement.lang === "pl" ? "EN" : "PL";
+    fab.href = "#";
+    fab.addEventListener("click", (event) => {
+      event.preventDefault();
+      window.dispatchEvent(new CustomEvent("fabian-toggle-lang"));
+      fab.textContent = fab.textContent === "EN" ? "PL" : "EN";
+    });
+  } else {
+    const target = map[path] || "/en/";
+    const isEnTarget = target === "/en/" || target === "/privacy" || target === "/terms";
+    fab.textContent = isEnTarget ? "EN" : "PL";
+    fab.href = target;
+  }
+  document.addEventListener("DOMContentLoaded", () => {
+    document.body.appendChild(fab);
+  });
+})();

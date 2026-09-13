@@ -1762,6 +1762,14 @@ if (elements.settingsClear) {
 }
 
 renderAttachRow();
+window.addEventListener("fabian-toggle-lang", () => {
+  settings.lang = uiLang === "pl" ? "en" : "pl";
+  persistSettings();
+  uiLang = settings.lang;
+  applyUiLang();
+  updateIdentity();
+});
+
 renderAll();
 updateCounter();
 updateIdentity();

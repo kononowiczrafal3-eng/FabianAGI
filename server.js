@@ -5,6 +5,7 @@ import { fileURLToPath } from "node:url";
 import { loadEnv } from "./src/lib/env.js";
 import { handleChat, handleCompact } from "./src/routes/chat.js";
 import { handleAdmin, handleAdminLogin } from "./src/routes/admin.js";
+import { handlePrivacy } from "./src/routes/privacy.js";
 import { FABIAN_PERSONALITY } from "./src/lib/groq.js";
 
 loadEnv();
@@ -90,6 +91,10 @@ const server = http.createServer(async (req, res) => {
       securityHeaders(res);
       res.writeHead(200, { "Content-Type": "application/json; charset=utf-8" });
       res.end(JSON.stringify({ name: "Fabian", personality: FABIAN_PERSONALITY }));
+      return;
+    }
+    if (url.pathname === "/api/privacy" && req.method === "POST") {
+      await handlePrivacy(req, res);
       return;
     }
     if (url.pathname === "/admin" && req.method === "GET") {
