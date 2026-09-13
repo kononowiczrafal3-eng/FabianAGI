@@ -650,7 +650,9 @@ code {
 }
 
 .hero {
-  background-image: url("https://giffiles.alphacoders.com/119/119858.gif");
+  background-image:
+    linear-gradient(rgba(15, 15, 17, 0.35), rgba(15, 15, 17, 0.55)),
+    url("https://tse1.mm.bing.net/th/id/OIP.f0atB44I63Al13TU5lAafgHaE7?r=0&rs=1&pid=ImgDetMain&o=7&rm=3");
   background-size: cover;
   background-position: center;
 }
@@ -1223,3 +1225,36 @@ code {
   color: var(--orange);
   animation: dotPulse 0.9s steps(1) infinite;
 }
+
+.previewToolbar {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+.previewModeBtn {
+  font-family: var(--sans);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text2);
+  background: var(--panel2);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 5px 12px;
+  cursor: pointer;
+  transition: color 0.12s ease, border-color 0.12s ease;
+}
+.previewModeBtn:hover { color: var(--text); }
+.previewModeBtn.active {
+  color: var(--orange);
+  border-color: rgba(255, 106, 31, 0.55);
+}
+.previewFrame {
+  transition: max-width 0.2s ease;
+}
+.previewFrame.mobile {
+  max-width: 390px;
+  margin: 0 auto;
+  border-left: 6px solid var(--panel2);
+  border-right: 6px solid var(--panel2);
+}
+.projectHeadActions { display: flex; gap: 8px; }

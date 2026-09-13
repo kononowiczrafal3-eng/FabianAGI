@@ -121,6 +121,15 @@ export async function handleChat(req, res) {
     "X-Accel-Buffering": "no"
   });
 
+  const heartbeat = setInterval(() => {
+    try {
+      res.write(": ping\n\n");
+    } catch {
+      clearInterval(heartbeat);
+    }
+  }, 15000);
+  res.on("close", () => clearInterval(heartbeat));
+
   try {
     const persona = sanitizePersona(body.persona);
     const memory = sanitizeMemory(body.memory);

@@ -46,7 +46,9 @@ KODOWANIE I PLIKI:
 \`\`\`file nazwa_pliku.txt
 tutaj pełna treść pliku
 \`\`\`
-- Gdy użytkownik prosi o cały projekt lub stronę WWW, każdy plik wysyłasz osobnym blokiem "file", a w nazwie podajesz ścieżkę (np. src/index.html, style.css, app.js) - aplikacja zbuduje drzewo plików i przycisk pobierania całości jako ZIP.
+- Gdy użytkownik prosi o cały projekt lub stronę WWW, każdy plik wysyłasz osobnym blokiem "file", a w nazwie podajesz ścieżkę (np. src/index.html, style.css, app.js) - aplikacja zbuduje drzewo plików, podgląd strony i przycisk pobierania całości jako ZIP.
+- Długie pliki (powyżej ~15 linijek), skrypty i gotowe programy zawsze wysyłaj jako blok "file" do pobrania - nigdy jako zwykły blok kodu.
+- Strony WWW dziel na pliki: index.html, style.css, script.js - osobno, żeby działał podgląd.
 - Dbaj o czytelność: sensowne nazwy zmiennych, komentarze tam, gdzie pomagają.
 
 NAJWAŻNIEJSZE:

@@ -319,13 +319,27 @@ function downloadFile(file) {
   );
 }
 
+let previewCurrentFile = null;
+
+function setPreviewMode(mode) {
+  const frame = document.getElementById("previewFrame");
+  const desktopBtn = document.getElementById("previewDesktop");
+  const mobileBtn = document.getElementById("previewMobile");
+  if (!frame) return;
+  frame.classList.toggle("mobile", mode === "mobile");
+  if (desktopBtn) desktopBtn.classList.toggle("active", mode !== "mobile");
+  if (mobileBtn) mobileBtn.classList.toggle("active", mode === "mobile");
+}
+
 function openPreview(file) {
   const overlay = document.getElementById("previewOverlay");
   const frame = document.getElementById("previewFrame");
   const title = document.getElementById("previewTitle");
   if (!overlay || !frame) return;
+  previewCurrentFile = file;
   if (title) title.textContent = "Podgląd: " + file.name;
   frame.srcdoc = file.content;
+  setPreviewMode("desktop");
   overlay.hidden = false;
 }
 
@@ -374,6 +388,19 @@ function createProjectCard(files) {
   headSub.textContent = files.length + " plików";
   headInfo.appendChild(headTitle);
   headInfo.appendChild(headSub);
+  const htmlFile =
+    files.find((f) => /(^|\/)index\.html?$/i.test(f.name || "")) ||
+    files.find((f) => /\.html?$/i.test(f.name || ""));
+  const headActions = document.createElement("div");
+  headActions.className = "projectHeadActions";
+  if (htmlFile) {
+    const previewBtn = document.createElement("button");
+    previewBtn.type = "button";
+    previewBtn.className = "btn btnSecondary btnSm";
+    previewBtn.textContent = "Podgląd strony";
+    previewBtn.addEventListener("click", () => openPreview(htmlFile));
+    headActions.appendChild(previewBtn);
+  }
   const zipBtn = document.createElement("button");
   zipBtn.type = "button";
   zipBtn.className = "btn btnPrimary btnSm";
@@ -381,8 +408,9 @@ function createProjectCard(files) {
   zipBtn.addEventListener("click", () => {
     downloadBlob(buildZipBlob(files), "fabian-projekt.zip");
   });
+  headActions.appendChild(zipBtn);
   head.appendChild(headInfo);
-  head.appendChild(zipBtn);
+  head.appendChild(headActions);
   card.appendChild(head);
 
   const tree = document.createElement("div");
@@ -984,11 +1012,19 @@ async function streamFabian(apiMessages, attachments, memory, onDelta) {
   }
   if (attachments.length) body.attachments = attachments;
 
-  const response = await fetch("/api/chat", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body)
-  });
+  const controller = new AbortController();
+  const fetchTimeout = setTimeout(() => controller.abort(), 90000);
+  let response;
+  try {
+    response = await fetch("/api/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+      signal: controller.signal
+    });
+  } finally {
+    clearTimeout(fetchTimeout);
+  }
 
   const contentType = response.headers.get("content-type") || "";
   if (!response.ok && contentType.includes("application/json")) {
@@ -1065,11 +1101,21 @@ async function requestAssistant(conversation, textEl, node, attachments) {
     .map((m) => ({ role: m.role, content: m.content }));
   const memoryText =
     conversation.memory && conversation.memory.text ? conversation.memory.text : null;
+  let attempts = 0;
   try {
-    const full = await streamFabian(apiMessages, safeAttachments, memoryText, (delta) => {
-      textEl.textContent = delta;
-      updateScroll();
-    });
+    let full = "";
+    for (;;) {
+      try {
+        full = await streamFabian(apiMessages, safeAttachments, memoryText, (delta) => {
+          textEl.textContent = delta;
+          updateScroll();
+        });
+        break;
+      } catch (error) {
+        attempts += 1;
+        if (attempts >= 2) throw error;
+      }
+    }
     if (!full.trim()) throw new Error("empty");
     addMessage(state, conversation.id, "assistant", full);
     saveChats(state);
@@ -1211,6 +1257,14 @@ if (previewCloseEl) {
   previewCloseEl.addEventListener("click", () => {
     if (previewOverlayEl) previewOverlayEl.hidden = true;
   });
+}
+const previewDesktopEl = document.getElementById("previewDesktop");
+if (previewDesktopEl) {
+  previewDesktopEl.addEventListener("click", () => setPreviewMode("desktop"));
+}
+const previewMobileEl = document.getElementById("previewMobile");
+if (previewMobileEl) {
+  previewMobileEl.addEventListener("click", () => setPreviewMode("mobile"));
 }
 if (previewOverlayEl) {
   previewOverlayEl.addEventListener("click", (event) => {
