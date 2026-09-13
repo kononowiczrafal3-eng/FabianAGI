@@ -631,7 +631,6 @@ code {
   background: var(--orange);
 }
 
-/* tryb aplikacji: czat na stale pod naglowkiem, zero przewijania strony */
 .appMode { overflow: hidden; }
 .appMode .appMain {
   position: fixed;
@@ -700,7 +699,6 @@ code {
 .msgAttach { margin-top: 6px; display: flex; gap: 6px; flex-wrap: wrap; }
 .msgAttach .attachChip { padding: 3px 12px; }
 
-/* wersja kompaktowa czatu */
 .chatTopbar { padding: 8px 14px; }
 .chatTitle { font-size: 14px; }
 
@@ -733,7 +731,6 @@ code {
   .chatEmpty p { font-size: 12.5px; }
 }
 
-/* subtelne animacje */
 @keyframes msgIn {
   from { opacity: 0; transform: translateY(6px); }
   to { opacity: 1; transform: none; }
@@ -1042,7 +1039,6 @@ code {
   .practiceStrip { grid-template-columns: 1fr; gap: 14px; }
 }
 
-/* narzedzia kodowe */
 .md pre.mdCode { position: relative; }
 .md pre.mdCode code { display: block; }
 .md pre.mdCode .codeCopyBtn {
@@ -1103,12 +1099,10 @@ code {
   border-radius: var(--radius);
 }
 
-/* optymalizacje renderowania */
 .modal, .scrollPill, #heroTagline {
   will-change: opacity, transform;
 }
 
-/* dialog potwierdzenia */
 .confirmModal {
   text-align: center;
   width: min(360px, 100%);
@@ -1136,7 +1130,6 @@ code {
   transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
 }
 .confirmDanger:hover { background: var(--red); border-color: var(--red); color: #fff; }
-/* akcje wiadomosci */
 .msg { position: relative; }
 .msgActions {
   position: absolute;
@@ -1172,7 +1165,6 @@ code {
   .msgActions { opacity: 0.6; visibility: visible; pointer-events: auto; }
 }
 
-/* ikona bota w awatarze */
 .msgAvatar { position: relative; overflow: hidden; }
 .msgAvatar img {
   position: absolute;
@@ -1190,7 +1182,6 @@ code {
   object-fit: cover;
 }
 
-/* mobile: akcje wiadomosci pod trescia, wieksze cele dotyku */
 @media (hover: none), (max-width: 640px) {
   .msgActions {
     position: static;
@@ -1207,18 +1198,15 @@ code {
   .fileCardName { flex-basis: 100%; }
 }
 
-/* bezpieczny obszar na dole (iPhone home indicator) */
 .chatComposer {
   padding-bottom: max(12px, env(safe-area-inset-bottom, 12px));
 }
 
-/* czat nie ucieka pod notchy */
 .appMode .appMain {
   padding-left: env(safe-area-inset-left, 0);
   padding-right: env(safe-area-inset-right, 0);
 }
 
-/* bardzo waskie ekrany: kompaktowy topbar */
 @media (max-width: 480px) {
   .chatTitle { max-width: 38vw; }
   .chatStatus { font-size: 10.5px; padding: 2px 9px; }
@@ -1230,7 +1218,6 @@ code {
   .confirmActions .btn { width: 100%; }
 }
 
-/* efekt typewriter */
 .msgText.typing::after {
   content: "\258D";
   color: var(--orange);
@@ -1270,7 +1257,6 @@ code {
 }
 .projectHeadActions { display: flex; gap: 8px; }
 
-/* przełącznik jezyka w rogu */
 .langFab {
   position: fixed;
   right: 16px;
@@ -1300,7 +1286,6 @@ code {
   text-decoration: none;
 }
 
-/* samoobsluga danych */
 .privacyTool {
   background: var(--panel);
   border: 1px solid var(--border);
@@ -1326,7 +1311,6 @@ code {
 .privacyRow input:focus { border-color: rgba(255, 106, 31, 0.55); }
 .privacyMsg { font-size: 12.5px; margin-top: 10px; color: var(--text2); }
 
-/* dropdown jezyka (Uiverse, ciemny motyw) */
 .langDrop {
   position: fixed;
   right: 16px;
@@ -1405,9 +1389,11 @@ code {
 
 .msgActionBtn.active { color: var(--orange); border-color: rgba(255, 106, 31, 0.6); }
 
-/* uniwersalny dialog (Uiverse, ciemny) */
-.fabModal { text-align: center; width: min(300px, 92%); padding: 18px 18px 16px; }
-.fabModal.success .fabModal.info .fabModal h2 { font-size: 16px; margin-bottom: 6px; }
+.fabModal { text-align: center; width: min(420px, 92%); padding: 22px 20px 18px; }
+.fabModal h2 { font-size: 17px; margin-bottom: 8px; }
+.fabModal .field { text-align: left; margin-bottom: 18px; }
+.fabModal .field label { color: var(--text2); }
+.fabModal textarea { min-height: 130px; resize: vertical; }
 .fabDialogMsg { color: var(--text2); font-size: 13px; line-height: 1.55; margin-bottom: 16px; }
 .fabDialogActions { display: flex; justify-content: center; gap: 10px; }
 .fabDialogOk { background: transparent; border: 1px solid var(--red); color: var(--red); transition: background 0.15s ease, color 0.15s ease; }
@@ -1418,7 +1404,6 @@ code {
 .fabModal.info .fabDialogOk:hover { background: var(--orange); border-color: var(--orange); color: #1a0d04; }
 .fabModal.info #fabDialogCancel { display: none; }
 
-/* przełącznik auto-narratora */
 .settingsToggleRow {
   display: flex;
   align-items: center;

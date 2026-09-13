@@ -11,7 +11,6 @@ function ensureDir() {
   try {
     fs.mkdirSync(dataDir, { recursive: true });
   } catch {
-    /* katalog moze juz istniec */
   }
 }
 
@@ -32,7 +31,6 @@ function pruneIfNeeded() {
       fs.writeFileSync(eventsFile, kept.join("\n") + "\n");
     }
   } catch {
-    /* pruning jest best-effort */
   }
 }
 
@@ -43,7 +41,6 @@ export function logEvent(event) {
     fs.appendFileSync(eventsFile, line);
     pruneIfNeeded();
   } catch {
-    /* logowanie nigdy nie moze zepsuc czatu */
   }
 }
 
@@ -56,7 +53,6 @@ export function readEvents(limit) {
       try {
         events.push(JSON.parse(lines[i]));
       } catch {
-        /* pomijamy uszkodzone linie */
       }
     }
     return events;
@@ -104,7 +100,6 @@ export function setOptout(ip, value) {
       const raw = JSON.parse(fs.readFileSync(optoutsFile, "utf8"));
       if (Array.isArray(raw)) list = raw;
     } catch {
-      /* brak pliku */
     }
     const next = value ? Array.from(new Set([...list, ip])) : list.filter((x) => x !== ip);
     saveOptouts(next);

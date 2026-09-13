@@ -311,7 +311,6 @@ fetch("/api/persona")
     }
   })
   .catch(() => {
-    /* endpoint niedostepny - brak prefill */
   });
 
 function persistSettings() {
@@ -477,7 +476,6 @@ function ensureHljs() {
         try {
           window.hljs.highlightElement(code);
         } catch {
-          /* jezyk nierozpoznany */
         }
       });
   };
@@ -1072,7 +1070,6 @@ function finalizeAssistant(textEl, full, animate) {
           window.hljs.highlightElement(code);
           highlighted += 1;
         } catch {
-          /* jezyk nierozpoznany - zostaje zwykly tekst */
         }
       }
       const copyBtn = document.createElement("button");
@@ -1128,14 +1125,15 @@ function attachMessageActions(node, conversation, index) {
     });
   }
   addBtn("\u270e", t("editMsg"), () => {
-    const next = window.prompt(t("editMsg") + ":", message.content);
-    if (next === null) return;
-    const trimmed = next.trim();
-    if (!trimmed || trimmed.length > 12000) return;
-    message.content = trimmed;
-    conversation.updatedAt = Date.now();
-    saveChats(state);
-    renderAll();
+    editDialog(message.content).then((next) => {
+      if (next === null) return;
+      const trimmed = next.trim();
+      if (!trimmed || trimmed.length > 12000) return;
+      message.content = trimmed;
+      conversation.updatedAt = Date.now();
+      saveChats(state);
+      renderAll();
+    });
   });
   addBtn("\u00d7", t("delMsg"), () => {
     conversation.messages.splice(index, 1);
@@ -1422,7 +1420,6 @@ async function handleFiles(fileList) {
         pendingAttachments.push({ name: file.name, content: text });
       }
     } catch {
-      /* pliku nie dało się odczytać */
     }
   }
   renderAttachRow();
@@ -1571,15 +1568,8 @@ function fabDialogOpen(options) {
     const input = document.getElementById("fabDialogInput");
     const okBtn = document.getElementById("fabDialogOk");
     const cancelBtn = document.getElementById("fabDialogCancel");
-    if (!overlay || !modal || !okBtn || !cancelBtn) {
-      if (options.input) {
-        resolve(window.prompt(options.title, options.initial || ""));
-      } else if (options.info) {
-        window.alert(options.message);
-        resolve(true);
-      } else {
-        resolve(window.confirm(options.message));
-      }
+    if (!overlay || !modal || !titleEl || !msgEl || !field || !input || !okBtn || !cancelBtn) {
+      resolve(options.input ? null : false);
       return;
     }
     fabDialogResolver = resolve;
@@ -1593,7 +1583,10 @@ function fabDialogOpen(options) {
     if (options.input) {
       field.hidden = false;
       input.value = options.initial || "";
-      setTimeout(() => { input.focus(); input.setSelectionRange(input.value.length, input.value.length); }, 60);
+      setTimeout(() => {
+        input.focus();
+        input.setSelectionRange(input.value.length, input.value.length);
+      }, 60);
     } else {
       field.hidden = true;
     }
@@ -1603,15 +1596,21 @@ function fabDialogOpen(options) {
       okBtn.removeEventListener("click", onOk);
       cancelBtn.removeEventListener("click", onCancel);
       overlay.removeEventListener("click", onBackdrop);
+      document.removeEventListener("keydown", onKeydown);
       fabDialogResolver = null;
       resolve(value);
     };
     const onOk = () => done(options.input ? input.value : true);
     const onCancel = () => done(options.input ? null : false);
     const onBackdrop = (event) => { if (event.target === overlay) done(options.input ? null : false); };
+    const onKeydown = (event) => {
+      if (event.key === "Escape") onCancel();
+      if (event.key === "Enter" && !options.input && document.activeElement !== cancelBtn) onOk();
+    };
     okBtn.addEventListener("click", onOk);
     cancelBtn.addEventListener("click", onCancel);
     overlay.addEventListener("click", onBackdrop);
+    document.addEventListener("keydown", onKeydown);
   });
 }
 

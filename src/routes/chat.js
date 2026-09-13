@@ -162,7 +162,6 @@ export async function handleChat(req, res) {
             attachments.push({ name: att.name + ":/" + file.name, content: file.content });
           }
         } catch {
-          /* uszkodzony zip - pomijamy */
         }
       } else {
         attachments.push(att);
@@ -277,8 +276,6 @@ export async function handleCompact(req, res) {
     return;
   }
 
-  // Keep the transcript in one explicit summarization request so user content
-  // cannot be mistaken for a fresh prompt that needs an ordinary reply.
   const transcript = check.messages
     .slice(-40)
     .map((msg) => (msg.role === "user" ? "USER: " : "ASSISTANT: ") + msg.content.slice(0, 3000))

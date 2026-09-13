@@ -100,7 +100,6 @@ export function loadChats() {
       const raw = localStorage.getItem(storageKey);
       if (raw) localStorage.setItem(backupKey, raw);
     } catch {
-      /* backup is best effort */
     }
     return emptyState();
   }
@@ -127,7 +126,6 @@ export function saveChats(state) {
     localStorage.setItem(storageKey, JSON.stringify(normalized));
     return "ok";
   } catch {
-    /* przekroczony limit - probujemy z przycieta wersja */
   }
   try {
     localStorage.setItem(storageKey, JSON.stringify(pruneState(normalized)));
@@ -191,6 +189,5 @@ export function clearAllChats() {
   try {
     localStorage.removeItem(storageKey);
   } catch {
-    /* brak dostepu do localStorage */
   }
 }

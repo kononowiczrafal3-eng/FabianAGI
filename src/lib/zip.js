@@ -65,7 +65,6 @@ export function extractTextFiles(base64, options = {}) {
       total += clipped.length;
       out.push({ name: entry.name, content: clipped });
     } catch {
-      /* pojedynczy wpis uszkodzony - pomijamy */
     }
   }
   return out;
