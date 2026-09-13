@@ -49,43 +49,77 @@ if (
   }, 4200);
 }
 
+
 (function () {
-  const map = {
-    "/": "/en/",
-    "/index.html": "/en/",
-    "/wyniki": "/en/results",
-    "/wyniki/": "/en/results",
-    "/prywatnosc": "/privacy",
-    "/prywatnosc/": "/privacy",
-    "/regulamin": "/terms",
-    "/regulamin/": "/terms",
-    "/en/": "/",
-    "/en/results": "/wyniki",
-    "/en/results/": "/wyniki",
-    "/privacy": "/prywatnosc",
-    "/privacy/": "/prywatnosc",
-    "/terms": "/regulamin",
-    "/terms/": "/regulamin"
+  const PAIRS = {
+    "/": "/en/", "/index.html": "/en/",
+    "/wyniki": "/en/results", "/wyniki/": "/en/results",
+    "/prywatnosc": "/privacy", "/prywatnosc/": "/privacy",
+    "/regulamin": "/terms", "/regulamin/": "/terms",
+    "/en/": "/", "/en/results": "/wyniki", "/en/results/": "/wyniki",
+    "/privacy": "/prywatnosc", "/privacy/": "/prywatnosc",
+    "/terms": "/regulamin", "/terms/": "/regulamin"
   };
-  const fab = document.createElement("a");
-  fab.className = "langFab";
-  fab.title = "Switch language / Zmień język";
   const path = window.location.pathname;
-  if (path === "/fabian" || path === "/fabian/") {
-    fab.textContent = document.documentElement.lang === "pl" ? "EN" : "PL";
-    fab.href = "#";
-    fab.addEventListener("click", (event) => {
-      event.preventDefault();
-      window.dispatchEvent(new CustomEvent("fabian-toggle-lang"));
-      fab.textContent = fab.textContent === "EN" ? "PL" : "EN";
-    });
-  } else {
-    const target = map[path] || "/en/";
-    const isEnTarget = target === "/en/" || target === "/privacy" || target === "/terms";
-    fab.textContent = isEnTarget ? "EN" : "PL";
-    fab.href = target;
+  const isFabian = path === "/fabian" || path === "/fabian/";
+
+  function getLang() {
+    try {
+      const saved = localStorage.getItem("fabian_lang");
+      if (saved === "pl" || saved === "en") return saved;
+    } catch (e) {}
+    return (navigator.language || "").toLowerCase().indexOf("pl") === 0 ? "pl" : "en";
   }
-  document.addEventListener("DOMContentLoaded", () => {
-    document.body.appendChild(fab);
-  });
+  function setLang(lang) {
+    try { localStorage.setItem("fabian_lang", lang); } catch (e) {}
+  }
+
+  function build() {
+    const lang = getLang();
+    const wrap = document.createElement("div");
+    wrap.className = "langDrop";
+    const toggle = document.createElement("input");
+    toggle.type = "checkbox";
+    toggle.className = "langDropToggle";
+    toggle.id = "langDropToggle";
+    const trigger = document.createElement("label");
+    trigger.className = "langDropTrigger";
+    trigger.setAttribute("for", "langDropToggle");
+    trigger.textContent = (lang === "pl" ? "Polski" : "English") + "  ·  " + lang.toUpperCase();
+    const list = document.createElement("ul");
+    list.className = "langDropList";
+    [["pl", "Polski"], ["en", "English"]].forEach(function (pair) {
+      const li = document.createElement("li");
+      li.className = "langDropItem";
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.textContent = pair[1];
+      if (pair[0] === lang) btn.classList.add("active");
+      btn.addEventListener("click", function () {
+        setLang(pair[0]);
+        toggle.checked = false;
+        if (isFabian) {
+          window.dispatchEvent(new CustomEvent("fabian-set-lang", { detail: pair[0] }));
+          trigger.textContent = pair[1] + "  ·  " + pair[0].toUpperCase();
+          list.querySelectorAll("button").forEach(function (b) { b.classList.remove("active"); });
+          btn.classList.add("active");
+        } else {
+          const target = PAIRS[path] || "/en/";
+          window.location.href = target;
+        }
+      });
+      li.appendChild(btn);
+      list.appendChild(li);
+    });
+    wrap.appendChild(toggle);
+    wrap.appendChild(trigger);
+    wrap.appendChild(list);
+    document.body.appendChild(wrap);
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", build);
+  } else {
+    build();
+  }
 })();

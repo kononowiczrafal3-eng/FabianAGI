@@ -180,6 +180,12 @@ function loadSettings() {
 
 
 let settings = loadSettings();
+if (!settings.lang) {
+  try {
+    const siteLang = localStorage.getItem("fabian_lang");
+    if (siteLang === "en" || siteLang === "pl") settings.lang = siteLang;
+  } catch (e) {}
+}
 let uiLang = settings.lang === "en" ? "en" : "pl";
 
 function t(key) {
@@ -1762,6 +1768,16 @@ if (elements.settingsClear) {
 }
 
 renderAttachRow();
+window.addEventListener("fabian-set-lang", (event) => {
+  const next = event.detail === "en" ? "en" : "pl";
+  settings.lang = next;
+  try { localStorage.setItem("fabian_lang", next); } catch (e) {}
+  persistSettings();
+  uiLang = next;
+  applyUiLang();
+  updateIdentity();
+});
+
 window.addEventListener("fabian-toggle-lang", () => {
   settings.lang = uiLang === "pl" ? "en" : "pl";
   persistSettings();

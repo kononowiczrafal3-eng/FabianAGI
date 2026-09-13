@@ -1314,3 +1314,80 @@ code {
 }
 .privacyRow input:focus { border-color: rgba(255, 106, 31, 0.55); }
 .privacyMsg { font-size: 12.5px; margin-top: 10px; color: var(--text2); }
+
+/* dropdown jezyka (Uiverse, ciemny motyw) */
+.langDrop {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: 120;
+  min-width: 190px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+  font-family: var(--sans);
+}
+.langDropToggle { position: absolute; opacity: 0; pointer-events: none; }
+.langDropTrigger {
+  cursor: pointer;
+  list-style: none;
+  user-select: none;
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--text);
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  position: relative;
+  z-index: 2;
+  background: var(--panel);
+}
+.langDropTrigger::before {
+  content: "›";
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  width: 16px;
+  height: 16px;
+  color: var(--text3);
+  font-size: 20px;
+  line-height: 1;
+  rotate: -90deg;
+  transition: rotate 300ms ease;
+}
+.langDropToggle:checked ~ .langDropTrigger::before { rotate: 90deg; }
+.langDropList {
+  list-style: none;
+  display: grid;
+  gap: 6px;
+  padding: 0 10px;
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+  transition: all 300ms ease;
+}
+.langDropToggle:checked ~ .langDropList {
+  max-height: 200px;
+  opacity: 1;
+  padding: 0 10px 10px;
+}
+.langDropItem button {
+  width: 100%;
+  text-align: left;
+  background: var(--bg2);
+  border: 1px solid var(--borderSoft);
+  border-radius: 6px;
+  color: var(--text2);
+  font-family: var(--sans);
+  font-size: 13px;
+  font-weight: 500;
+  padding: 9px 12px;
+  cursor: pointer;
+  transition: color 0.12s ease, border-color 0.12s ease;
+}
+.langDropItem button:hover { color: var(--text); border-color: var(--border); }
+.langDropItem button.active { color: var(--orange); border-color: rgba(255, 106, 31, 0.5); }

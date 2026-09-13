@@ -9,7 +9,19 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/css/style.css?v=1.6.13">
+  <link rel="stylesheet" href="/css/style.css?v=1.7.1">
+<script>
+(function () {
+  var lang = null;
+  try { lang = localStorage.getItem("fabian_lang"); } catch (e) {}
+  if (!lang) return;
+  var here = location.pathname;
+  var pair = {"/": "/en/", "/index.html": "/en/", "/wyniki": "/en/results", "/wyniki/": "/en/results", "/prywatnosc": "/privacy", "/prywatnosc/": "/privacy", "/regulamin": "/terms", "/regulamin/": "/terms", "/en/": "/", "/en/results": "/wyniki", "/en/results/": "/wyniki", "/privacy": "/prywatnosc", "/privacy/": "/prywatnosc", "/terms": "/regulamin", "/terms/": "/regulamin"};
+  var isEn = here.indexOf("/en/") === 0 || here === "/privacy" || here === "/privacy/" || here === "/terms" || here === "/terms/";
+  if (lang === "en" && !isEn) location.replace(pair);
+  if (lang === "pl" && isEn) location.replace(pair);
+})();
+</script>
 </head>
 <body>
   <header class="siteHeader">
@@ -74,6 +86,6 @@
       </nav>
     </div>
   </footer>
-  <script src="/js/main.js?v=1.7.0"></script>
+  <script src="/js/main.js?v=1.7.1"></script>
 </body>
 </html>
