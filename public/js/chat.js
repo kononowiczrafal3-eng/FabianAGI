@@ -1112,7 +1112,7 @@ function attachMessageActions(node, conversation, index) {
     addBtn("\u21bb", t("genAgain"), () => {
       regenerateFrom(conversation, index);
     });
-    addBtn("\ud83d\udd0a", t("narrator"), (event) => {
+    addBtn("♪", t("narrator"), (event) => {
       speakText(message.content, event.currentTarget);
     });
   }
@@ -1296,8 +1296,7 @@ async function requestAssistant(conversation, textEl, node, attachments) {
   const apiMessages = conversation.messages
     .filter((m) => m.role === "user" || m.role === "assistant")
     .map((m) => ({ role: m.role, content: m.content }));
-  const memoryText =
-    conversation.memory && conversation.memory.text ? conversation.memory.text : null;
+  const memoryText = usableMemoryText(conversation.memory && conversation.memory.text) || null;
   let attempts = 0;
   try {
     let full = "";
@@ -1659,15 +1658,20 @@ function closeMemoryModal() {
   memoryTargetId = null;
 }
 
+function usableMemoryText(value) {
+  if (typeof value !== "string") return "";
+  const text = value.trim();
+  if (!text || text === "[object Promise]" || text === "[object Object]" || text === "undefined") return "";
+  if (/^(I[’']m not sure what you mean|Nie jestem pewien, co masz na myśli)/i.test(text)) return "";
+  return text;
+}
+
 function renderMemoryModal(conversation) {
   if (!elements.convStats) return;
   if (elements.convUserPersona) {
     elements.convUserPersona.value = conversation.userPersona || "";
   }
-  const memoryText =
-    conversation.memory && typeof conversation.memory.text === "string"
-      ? conversation.memory.text
-      : "";
+  const memoryText = usableMemoryText(conversation.memory && conversation.memory.text);
   const stats = [
     conversation.messages.length + " " + t("memoryMessages"),
     memoryText.length + " " + t("memoryCharacters")
@@ -1780,9 +1784,9 @@ function buildMemoryText(structured) {
   return lines.join("\n").slice(0, 4000);
 }
 
-async function compactConversation(conversation, showStatus) {
+async function compactConversation(conversation, showStatus, force = false) {
   if (compacting || !conversation || conversation.messages.length === 0) return false;
-  if (conversation.memory && conversation.messages.length - conversation.memory.count < 2) return false;
+  if (!force && conversation.memory && conversation.messages.length - conversation.memory.count < 2) return false;
   compacting = true;
   if (showStatus) setBusyStatus(t("compacting"));
   try {
@@ -1918,7 +1922,7 @@ if (elements.memoryRefresh) {
     const conversation = state.conversations.find((x) => x.id === memoryTargetId);
     if (!conversation) return;
     elements.memoryRefresh.disabled = true;
-    await compactConversation(conversation, true);
+    await compactConversation(conversation, true, true);
     elements.memoryRefresh.disabled = false;
     renderMemoryModal(conversation);
   });

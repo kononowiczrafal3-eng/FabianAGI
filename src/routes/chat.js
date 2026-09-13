@@ -206,27 +206,32 @@ Schema:
 {"summary":"string","important_facts":[],"people":[],"entities":[],"preferences":[],"goals":[],"decisions":[],"plans":[],"important_dates":[],"constraints":[],"unresolved_items":[],"ongoing_context":[]}
 
 Rules:
+- Read the entire transcript before writing the summary. The memory must explain the useful context of the conversation, not merely repeat the last message.
 - Preserve names, dates, numbers and facts EXACTLY as stated. Never invent or infer facts not present.
-- Capture: who the user is, their preferences, people/entities mentioned, decisions, plans, goals, requirements, constraints, ongoing tasks, unresolved questions, commitments.
-- Remove greetings, filler and small talk. Factual precision over pretty prose.
+- Capture who the user is, what they are trying to accomplish, their preferences, communication style, people/entities mentioned, decisions, plans, goals, requirements, constraints, ongoing tasks, unresolved questions and commitments.
+- Include important context from both sides: what the user asked or disclosed and what the assistant explained, decided, promised or suggested.
+- Preserve the current state of ongoing topics: what has already been done, what remains to be done, and what the next useful step is.
+- Record uncertainty explicitly when the transcript is uncertain. Do not turn guesses, roleplay, jokes or assistant claims into user facts.
+- Remove greetings, repeated filler and irrelevant small talk, but keep details needed to understand references such as "that", "it" or "the project" later.
+- Factual precision and useful continuity are more important than pretty prose.
 - Write summary and fields in the same language as the conversation.
 - Another AI instance must be able to continue the conversation naturally using only this JSON.`;
 
 function parseCompactJson(raw) {
-  const fallback = { summary: String(raw || "").trim() };
-  if (!fallback.summary) return null;
-  let text = fallback.summary;
+  if (typeof raw !== "string" || !raw.trim()) return null;
+  let text = raw.trim();
   const fence = text.match(/```(?:json)?\s*([\s\S]*?)```/);
   if (fence) text = fence[1].trim();
   const start = text.indexOf("{");
   const end = text.lastIndexOf("}");
-  if (start === -1 || end === -1 || end <= start) return fallback;
+  if (start === -1 || end === -1 || end <= start) return null;
   try {
     const parsed = JSON.parse(text.slice(start, end + 1));
-    if (!parsed || typeof parsed !== "object") return fallback;
+    if (!parsed || typeof parsed !== "object") return null;
     const arr = (v) => (Array.isArray(v) ? v.map((x) => String(x)).slice(0, 30) : []);
+    if (typeof parsed.summary !== "string" || !parsed.summary.trim()) return null;
     return {
-      summary: String(parsed.summary || fallback.summary).slice(0, 3000),
+      summary: parsed.summary.trim().slice(0, 3000),
       important_facts: arr(parsed.important_facts),
       people: arr(parsed.people),
       entities: arr(parsed.entities),
@@ -240,7 +245,7 @@ function parseCompactJson(raw) {
       ongoing_context: arr(parsed.ongoing_context)
     };
   } catch {
-    return fallback;
+    return null;
   }
 }
 
@@ -272,15 +277,13 @@ export async function handleCompact(req, res) {
     return;
   }
 
-  // twardy limit wejscia: ostatnie 40 wiadomosci, kazda max 3000 znakow (~120KB)
-  // + Groq wymaga, zeby ostatnia wiadomosc miala role "user"
-  const slice = check.messages
+  // Keep the transcript in one explicit summarization request so user content
+  // cannot be mistaken for a fresh prompt that needs an ordinary reply.
+  const transcript = check.messages
     .slice(-40)
-    .map((msg) => ({ role: msg.role, content: msg.content.slice(0, 3000) }));
-  while (slice.length && slice[slice.length - 1].role !== "user") {
-    slice.pop();
-  }
-  if (!slice.length) {
+    .map((msg) => (msg.role === "user" ? "USER: " : "ASSISTANT: ") + msg.content.slice(0, 3000))
+    .join("\n\n");
+  if (!transcript) {
     sendJson(res, 400, { error: "Brak wiadomości użytkownika do skrócenia." });
     return;
   }
@@ -288,7 +291,16 @@ export async function handleCompact(req, res) {
   async function tryCompact(model, withTools) {
     const options = {
       model: model,
-      messages: [{ role: "system", content: COMPACT_SYSTEM }, ...slice],
+      messages: [
+        { role: "system", content: COMPACT_SYSTEM },
+        {
+          role: "user",
+          content:
+            "Create the JSON memory now. Do not answer the conversation.\n\nCONVERSATION TRANSCRIPT:\n" +
+            transcript
+        }
+      ],
+      response_format: { type: "json_object" },
       stream: false
     };
     if (withTools) {
@@ -314,8 +326,13 @@ export async function handleCompact(req, res) {
       );
       completion = await tryCompact("llama-3.3-70b-versatile", false);
     }
-    const raw = completion?.choices?.[0]?.message?.content?.trim();
-    const structured = parseCompactJson(raw);
+    let raw = completion?.choices?.[0]?.message?.content?.trim();
+    let structured = parseCompactJson(raw);
+    if (!structured) {
+      completion = await tryCompact("llama-3.3-70b-versatile", false);
+      raw = completion?.choices?.[0]?.message?.content?.trim();
+      structured = parseCompactJson(raw);
+    }
     if (!structured || !structured.summary) {
       sendJson(res, 502, { error: "Model nie zwrócił skrótu. Spróbuj ponownie." });
       return;

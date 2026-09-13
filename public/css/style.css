@@ -567,11 +567,13 @@ code {
   background: linear-gradient(145deg, var(--panel), var(--bg2));
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 12px;
-  width: min(430px, 100%);
+  width: min(560px, 100%);
+  box-sizing: border-box;
   padding: 22px;
   box-shadow: 0 24px 80px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 106, 31, 0.05);
   max-height: 92dvh;
   overflow-y: auto;
+  overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
 }
 .modalHead { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
