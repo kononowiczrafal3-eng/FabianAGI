@@ -582,10 +582,20 @@ function syncPinned() {
   elements.scrollPill.hidden = pinnedToBottom;
 }
 
+let lastScrollAt = 0;
+
 function updateScroll() {
-  if (pinnedToBottom) {
-    elements.chatScroll.scrollTop = elements.chatScroll.scrollHeight;
-  }
+  if (!pinnedToBottom || !elements.chatScroll) return;
+  const now = Date.now();
+  if (now - lastScrollAt < 90) return;
+  lastScrollAt = now;
+  elements.chatScroll.scrollTop = elements.chatScroll.scrollHeight;
+}
+
+function scrollNow() {
+  if (!elements.chatScroll) return;
+  lastScrollAt = Date.now();
+  elements.chatScroll.scrollTop = elements.chatScroll.scrollHeight;
 }
 
 function forceScroll() {
@@ -738,10 +748,29 @@ function buildMessageNode(role, content, attachments) {
   return { node, text };
 }
 
+const mdCache = new Map();
+const fileCache = new Map();
+
+function renderMarkdownCached(source) {
+  if (mdCache.has(source)) return mdCache.get(source);
+  const html = renderMarkdown(source);
+  if (mdCache.size > 60) mdCache.clear();
+  mdCache.set(source, html);
+  return html;
+}
+
+function extractFileBlocksCached(text) {
+  if (fileCache.has(text)) return fileCache.get(text);
+  const parsed = extractFileBlocks(text);
+  if (fileCache.size > 60) fileCache.clear();
+  fileCache.set(text, parsed);
+  return parsed;
+}
+
 function finalizeAssistant(textEl, full) {
-  const parsed = extractFileBlocks(full);
+  const parsed = extractFileBlocksCached(full);
   textEl.className = "msgText md";
-  textEl.innerHTML = renderMarkdown(parsed.cleaned || full);
+  textEl.innerHTML = renderMarkdownCached(parsed.cleaned || full);
   if (parsed.files.length) {
     const wrap = document.createElement("div");
     wrap.className = "msgFiles";
@@ -754,11 +783,14 @@ function finalizeAssistant(textEl, full) {
   }
   ensureHljs();
   const blocks = textEl.querySelectorAll("pre.mdCode");
+  let highlighted = 0;
   for (const pre of blocks) {
+    if (highlighted >= 6) break;
     const code = pre.querySelector("code");
-    if (window.hljs && code) {
+    if (window.hljs && code && code.textContent.length <= 15000) {
       try {
         window.hljs.highlightElement(code);
+        highlighted += 1;
       } catch {
         /* jezyk nierozpoznany - zostaje zwykly tekst */
       }
@@ -984,7 +1016,7 @@ async function requestAssistant(conversation, textEl, node, attachments) {
     addMessage(state, conversation.id, "assistant", full);
     saveChats(state);
     finalizeAssistant(textEl, full);
-    updateScroll();
+    scrollNow();
     maybeAutoCompact(conversation);
   } catch {
     showError(textEl, node, () => {

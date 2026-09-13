@@ -1097,7 +1097,7 @@ code {
 }
 
 /* optymalizacje renderowania */
-.msg, .modal, .chatMenu, .scrollPill, #heroTagline {
+.modal, .scrollPill, #heroTagline {
   will-change: opacity, transform;
 }
 
