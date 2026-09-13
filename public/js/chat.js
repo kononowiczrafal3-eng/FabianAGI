@@ -866,36 +866,37 @@ function finalizeAssistant(textEl, full, animate) {
     }
     textEl.parentElement.appendChild(wrap);
   }
-  ensureHljs();
-  const blocks = textEl.querySelectorAll("pre.mdCode");
-  let highlighted = 0;
-  for (const pre of blocks) {
-    if (highlighted >= 6) break;
-    const code = pre.querySelector("code");
-    if (window.hljs && code && code.textContent.length <= 15000) {
-      try {
-        window.hljs.highlightElement(code);
-        highlighted += 1;
-      } catch {
-        /* jezyk nierozpoznany - zostaje zwykly tekst */
+  return reveal.then(() => {
+    ensureHljs();
+    const blocks = textEl.querySelectorAll("pre.mdCode");
+    let highlighted = 0;
+    for (const pre of blocks) {
+      if (highlighted >= 6) break;
+      const code = pre.querySelector("code");
+      if (window.hljs && code && code.textContent.length <= 15000) {
+        try {
+          window.hljs.highlightElement(code);
+          highlighted += 1;
+        } catch {
+          /* jezyk nierozpoznany - zostaje zwykly tekst */
+        }
       }
-    }
-    const copyBtn = document.createElement("button");
-    copyBtn.type = "button";
-    copyBtn.className = "codeCopyBtn mono";
-    copyBtn.textContent = "kopiuj";
-    copyBtn.addEventListener("click", () => {
-      const target = code || pre;
-      navigator.clipboard.writeText(target.textContent).then(() => {
-        copyBtn.textContent = "skopiowano";
-        setTimeout(() => {
-          copyBtn.textContent = "kopiuj";
-        }, 1500);
+      const copyBtn = document.createElement("button");
+      copyBtn.type = "button";
+      copyBtn.className = "codeCopyBtn mono";
+      copyBtn.textContent = "kopiuj";
+      copyBtn.addEventListener("click", () => {
+        const target = code || pre;
+        navigator.clipboard.writeText(target.textContent).then(() => {
+          copyBtn.textContent = "skopiowano";
+          setTimeout(() => {
+            copyBtn.textContent = "kopiuj";
+          }, 1500);
+        });
       });
-    });
-    pre.appendChild(copyBtn);
-  }
-  return reveal;
+      pre.appendChild(copyBtn);
+    }
+  });
 }
 
 function attachMessageActions(node, conversation, index) {

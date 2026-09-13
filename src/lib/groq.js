@@ -136,6 +136,13 @@ export function streamChat(client, messages, persona, model = "groq/compound-min
     options.reasoning_effort = "default";
   }
 
+  if (model.startsWith("openai/gpt-oss")) {
+    options.temperature = 1;
+    options.max_completion_tokens = 2048;
+    options.top_p = 1;
+    options.reasoning_effort = "medium";
+  }
+
   return client.chat.completions.create(options);
 }
 

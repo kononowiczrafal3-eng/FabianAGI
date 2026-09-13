@@ -120,7 +120,9 @@ export function composeMessages(messages, attachments, memory) {
 const chatModels = new Set([
   "groq/compound-mini",
   "groq/compound",
-  "qwen/qwen3.8-27b"
+  "qwen/qwen3.8-27b",
+  "openai/gpt-oss-120b",
+  "openai/gpt-oss"
 ]);
 const transcriptionModels = new Set(["whisper-large-v3-turbo", "whisper-large-v3"]);
 
