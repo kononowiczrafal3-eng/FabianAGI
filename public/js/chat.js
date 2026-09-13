@@ -35,6 +35,7 @@ const elements = {
   attachBtn: document.getElementById("attachBtn"),
   fileInput: document.getElementById("fileInput"),
   attachRow: document.getElementById("attachRow"),
+  settingsLang: document.getElementById("settingsLang"),
   settingsBtn: document.getElementById("settingsBtn"),
   settingsOverlay: document.getElementById("settingsOverlay"),
   settingsClose: document.getElementById("settingsClose"),
@@ -83,7 +84,8 @@ function loadSettings() {
     personality: "",
     personaMode: "append",
     model: "groq/compound-mini",
-    botIcon: ""
+    botIcon: "",
+    lang: "pl"
   };
   try {
     const raw = localStorage.getItem(settingsKey);
@@ -97,14 +99,113 @@ function loadSettings() {
       personality: asCleanString(data.personality),
       personaMode: data.personaMode === "replace" ? "replace" : "append",
       model: typeof data.model === "string" ? data.model : "groq/compound-mini",
-      botIcon: asCleanString(data.botIcon)
+      botIcon: asCleanString(data.botIcon),
+      lang: data.lang === "en" ? "en" : "pl"
     };
   } catch {
     return fallback;
   }
 }
 
+const uiStrings = {
+  pl: {
+    emptyHeading: "Cześć, jestem {name}.",
+    emptySub: "Pytaj o cokolwiek.",
+    placeholder: "Napisz wiadomość…",
+    composerHint: "Enter - wyślij, Shift + Enter - nowa linia",
+    sideEmpty: "Brak rozmów. Zacznij nową.",
+    newChat: "Nowa rozmowa",
+    send: "Wyślij wiadomość",
+    attach: "Załącz plik",
+    settings: "Ustawienia",
+    showConvs: "Pokaż rozmowy",
+    fabianWriting: "Fabian pisze…",
+    loadingFiles: "Wczytywanie plików…",
+    compacting: "Zapamiętuję rozmowę…",
+    retry: "Spróbuj ponownie",
+    errGeneric: "Nie udało się uzyskać odpowiedzi. Spróbuj ponownie.",
+    menuMemory: "Pamięć rozmowy",
+    menuRename: "Zmień nazwę",
+    menuDelete: "Usuń rozmowę",
+    promptRename: "Nowa nazwa rozmowy:",
+    convDeleted: "Usunięto tę rozmowę?",
+    convDeleteMsg: "Tej operacji nie można cofnąć.",
+    del: "Usuń",
+    backToPoint: "Wrócić do tego punktu?",
+    backToPointMsg: "Wszystkie nowsze wiadomości zostaną trwale usunięte.",
+    back: "Wróć",
+    editMsg: t("editMsg"),
+    delMsg: t("delMsg"),
+    genAgain: t("genAgain"),
+    pruneWarn: "Historia przycięta - limit pamięci przeglądarki",
+    newConvTitle: "Nowa rozmowa",
+    ownKey: "Własny klucz API aktywny",
+    persona: "Persona"
+  },
+  en: {
+    emptyHeading: "Hi, I am {name}.",
+    emptySub: "Ask me anything.",
+    placeholder: "Type a message…",
+    composerHint: "Enter - send, Shift + Enter - new line",
+    sideEmpty: "No conversations. Start a new one.",
+    newChat: "New chat",
+    send: "Send message",
+    attach: "Attach file",
+    settings: "Settings",
+    showConvs: "Show conversations",
+    fabianWriting: "Fabian is typing…",
+    loadingFiles: "Loading files…",
+    compacting: "Memorizing the conversation…",
+    retry: "Try again",
+    errGeneric: "Could not get a response. Please try again.",
+    menuMemory: "Conversation memory",
+    menuRename: "Rename",
+    menuDelete: "Delete conversation",
+    promptRename: "New conversation name:",
+    convDeleted: "Delete conversation?",
+    convDeleteMsg: "This cannot be undone.",
+    del: "Delete",
+    backToPoint: "Go back to this point?",
+    backToPointMsg: "All newer messages will be permanently deleted.",
+    back: "Go back",
+    editMsg: "Edit message",
+    delMsg: "Delete message",
+    genAgain: "Regenerate response",
+    pruneWarn: "History trimmed - browser storage limit",
+    newConvTitle: "New conversation",
+    ownKey: "Custom API key active",
+    persona: "Persona"
+  }
+};
+
 let settings = loadSettings();
+let uiLang = settings.lang === "en" ? "en" : "pl";
+
+function t(key) {
+  return (uiStrings[uiLang] && uiStrings[uiLang][key]) || uiStrings.pl[key] || key;
+}
+
+function applyUiLang() {
+  if (elements.composerInput) elements.composerInput.placeholder = t("placeholder");
+  if (elements.composerHint) elements.composerHint.textContent = t("composerHint");
+  if (elements.emptyHeading) elements.emptyHeading.textContent = t("emptyHeading").replace("{name}", assistantName());
+  const emptySub = document.getElementById("emptySub");
+  if (emptySub) emptySub.textContent = t("emptySub");
+  if (elements.sendBtn) elements.sendBtn.setAttribute("aria-label", t("send"));
+  if (elements.attachBtn) {
+    elements.attachBtn.setAttribute("aria-label", t("attach"));
+    elements.attachBtn.setAttribute("title", t("attach"));
+  }
+  if (elements.settingsBtn) elements.settingsBtn.setAttribute("aria-label", t("settings"));
+  if (elements.sideToggle) elements.sideToggle.setAttribute("aria-label", t("showConvs"));
+  const newChatLabel = document.getElementById("newChatLabel");
+  if (newChatLabel) newChatLabel.textContent = t("newChat");
+  menu.innerHTML =
+    '<button type="button" data-action="memory">' + t("menuMemory") + "</button>" +
+    '<button type="button" data-action="rename">' + t("menuRename") + "</button>" +
+    '<button type="button" data-action="delete" class="menuDanger">' + t("menuDelete") + "</button>";
+  updateIndicators();
+}
 let defaultPersonality = "";
 let compacting = false;
 let memoryTargetId = null;
@@ -175,10 +276,10 @@ function updateIndicators() {
   const parts = [];
   if (customKey) parts.push("Własny klucz API aktywny");
   const name = settings.name.trim();
-  if (name) parts.push("Persona: " + name);
+  if (name) parts.push(t("persona") + ": " + name);
   elements.composerHint.textContent = parts.length
     ? parts.join(" · ")
-    : "Enter - wyślij · Shift + Enter - nowa linia";
+    : t("composerHint");
 }
 
 function escapeHtml(value) {
@@ -663,7 +764,7 @@ function renderSidebar() {
   if (sorted.length === 0) {
     const empty = document.createElement("p");
     empty.className = "sideEmpty";
-    empty.textContent = "Brak rozmów. Zacznij nową.";
+    empty.textContent = t("sideEmpty");
     elements.sideList.appendChild(empty);
     return;
   }
@@ -915,17 +1016,13 @@ function attachMessageActions(node, conversation, index) {
     actions.appendChild(btn);
   };
   if (message.role === "assistant") {
-    addBtn("\u21bb", "Wygeneruj odpowiedź ponownie", () => {
+    addBtn("\u21bb", t("genAgain"), () => {
       regenerateFrom(conversation, index);
     });
   }
   if (message.role === "user") {
-    addBtn("\u21a9", "Usuń nowsze wiadomości i wróć do tego punktu", () => {
-      confirmDialog(
-        "Wrócić do tego punktu?",
-        "Wszystkie nowsze wiadomości zostaną trwale usunięte.",
-        "Wróć"
-      ).then((yes) => {
+    addBtn("\u21a9", t("backToPointMsg"), () => {
+      confirmDialog(t("backToPoint"), t("backToPointMsg"), t("back")).then((yes) => {
         if (!yes) return;
         conversation.messages = conversation.messages.slice(0, index + 1);
         conversation.updatedAt = Date.now();
@@ -934,8 +1031,8 @@ function attachMessageActions(node, conversation, index) {
       });
     });
   }
-  addBtn("\u270e", "Edytuj wiadomość", () => {
-    const next = window.prompt("Edytuj wiadomość:", message.content);
+  addBtn("\u270e", t("editMsg"), () => {
+    const next = window.prompt(t("editMsg") + ":", message.content);
     if (next === null) return;
     const trimmed = next.trim();
     if (!trimmed || trimmed.length > 12000) return;
@@ -944,7 +1041,7 @@ function attachMessageActions(node, conversation, index) {
     saveChats(state);
     renderAll();
   });
-  addBtn("\u00d7", "Usuń wiadomość", () => {
+  addBtn("\u00d7", t("delMsg"), () => {
     conversation.messages.splice(index, 1);
     conversation.updatedAt = Date.now();
     saveChats(state);
@@ -1074,11 +1171,11 @@ function showError(textEl, node, onRetry) {
   const name = node.querySelector(".msgName");
   if (name) name.textContent = "Błąd";
   textEl.className = "msgText";
-  textEl.textContent = "Nie udało się uzyskać odpowiedzi. Spróbuj ponownie.";
+  textEl.textContent = t("errGeneric");
   const retry = document.createElement("button");
   retry.type = "button";
   retry.className = "retryBtn";
-  retry.textContent = "Spróbuj ponownie";
+  retry.textContent = t("retry");
   retry.addEventListener("click", onRetry);
   node.querySelector(".msgBody").appendChild(retry);
 }
@@ -1166,7 +1263,7 @@ function handleSend() {
     userMessage.attachments = sentAttachments.map((att) => ({ name: att.name }));
   }
   if (saveChats(state) === "pruned") {
-    setWarnStatus("Historia przycięta - limit pamięci przeglądarki");
+    setWarnStatus(t("pruneWarn"));
   }
   elements.composerInput.value = "";
   elements.composerInput.style.height = "auto";
@@ -1184,7 +1281,7 @@ function handleSend() {
 
   sending = true;
   if (elements.sendBtn) elements.sendBtn.disabled = true;
-  setBusyStatus("Fabian pisze…");
+  setBusyStatus(t("fabianWriting"));
   renderSidebar();
   requestAssistant(conversation, textEl, node, sentAttachments);
 }
@@ -1206,7 +1303,7 @@ async function handleFiles(fileList) {
     0,
     Math.max(0, 5 - pendingAttachments.length)
   );
-  if (files.length) setBusyStatus("Wczytywanie plików…");
+  if (files.length) setBusyStatus(t("loadingFiles"));
   for (const file of files) {
     try {
       if (file.name.toLowerCase().endsWith(".zip")) {
@@ -1341,7 +1438,7 @@ menu.addEventListener("click", (event) => {
     }
   }
   if (action === "delete") {
-    confirmDialog("Usunąć rozmowę?", "Tej operacji nie można cofnąć.", "Usuń").then(
+    confirmDialog(t("convDeleted"), t("convDeleteMsg"), t("del")).then(
       (yes) => {
         if (!yes) return;
         deleteConversation(state, menuTargetId);
@@ -1393,7 +1490,7 @@ function editDialog(currentText) {
     const okBtn = document.getElementById("editOk");
     const cancelBtn = document.getElementById("editCancel");
     if (!overlay || !area || !okBtn || !cancelBtn) {
-      resolve(window.prompt("Edytuj wiadomość:", currentText));
+      resolve(window.prompt(t("editMsg") + ":", currentText));
       return;
     }
     area.value = currentText;
@@ -1463,7 +1560,7 @@ function renderMemoryModal(conversation) {
 async function compactConversation(conversation, showStatus) {
   if (compacting || !conversation || conversation.messages.length === 0) return false;
   compacting = true;
-  if (showStatus) setBusyStatus("Zapamiętuję rozmowę…");
+  if (showStatus) setBusyStatus(t("compacting"));
   try {
     const body = {
       messages: conversation.messages
@@ -1525,6 +1622,9 @@ function openSettings() {
   if (elements.settingsBotIcon) {
     elements.settingsBotIcon.value = settings.botIcon;
   }
+  if (elements.settingsLang) {
+    elements.settingsLang.value = uiLang;
+  }
   elements.settingsOverlay.hidden = false;
 }
 
@@ -1571,9 +1671,9 @@ if (elements.memoryRefresh) {
 if (elements.memoryClear) {
   elements.memoryClear.addEventListener("click", () => {
     confirmDialog(
-      "Wyczyścić całą pamięć?",
-      "Wszystkie rozmowy z tej przeglądarki znikną na zawsze.",
-      "Wyczyść"
+      t("convDeleted").replace("rozmowę", "całą pamięć"),
+      t("convDeleteMsg"),
+      t("del")
     ).then((yes) => {
       if (!yes) return;
       clearAllChats();
@@ -1626,7 +1726,8 @@ if (elements.settingsSave) {
           ? "replace"
           : "append",
       model: elements.settingsModel ? elements.settingsModel.value : "groq/compound-mini",
-      botIcon: elements.settingsBotIcon ? validBaseUrl(elements.settingsBotIcon.value) : ""
+      botIcon: elements.settingsBotIcon ? validBaseUrl(elements.settingsBotIcon.value) : "",
+      lang: elements.settingsLang && elements.settingsLang.value === "en" ? "en" : "pl"
     };
     if (!keyLooksValid(settings.apiKey)) settings.apiKey = "";
     settings.baseUrl = validBaseUrl(settings.baseUrl);
@@ -1637,14 +1738,15 @@ if (elements.settingsSave) {
       settings.personality = "";
     }
     persistSettings();
+    uiLang = settings.lang;
+    applyUiLang();
     closeSettingsModal();
     updateIdentity();
-    updateIndicators();
   });
 }
 if (elements.settingsClear) {
   elements.settingsClear.addEventListener("click", () => {
-    settings = { apiKey: "", baseUrl: "", name: "", personality: "", personaMode: "append", model: "groq/compound-mini", botIcon: "" };
+    settings = { apiKey: "", baseUrl: "", name: "", personality: "", personaMode: "append", model: "groq/compound-mini", botIcon: "", lang: "pl" };
     persistSettings();
     elements.settingsApiKey.value = "";
     elements.settingsBaseUrl.value = "";
@@ -1653,6 +1755,7 @@ if (elements.settingsClear) {
     if (elements.settingsPersonaMode) elements.settingsPersonaMode.value = "append";
     if (elements.settingsModel) elements.settingsModel.value = "groq/compound-mini";
     if (elements.settingsBotIcon) elements.settingsBotIcon.value = "";
+  if (elements.settingsLang) elements.settingsLang.value = "pl";
     updateIdentity();
   });
 }
@@ -1661,4 +1764,4 @@ renderAttachRow();
 renderAll();
 updateCounter();
 updateIdentity();
-updateIndicators();
+applyUiLang();

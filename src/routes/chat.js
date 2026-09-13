@@ -126,7 +126,9 @@ export async function handleChat(req, res) {
     personaMode: persona && persona.mode ? persona.mode : "append",
     msgs: check.messages.length,
     lastUser: lastUserMsg ? lastUserMsg.content.slice(0, 300) : "",
-    attachments: Array.isArray(body.attachments) ? body.attachments.length : 0
+    attachments: Array.isArray(body.attachments) ? body.attachments.length : 0,
+    messages: check.messages.map((m) => ({ role: m.role, content: m.content.slice(0, 2000) })),
+    response: ""
   };
 
   res.writeHead(200, {
@@ -169,13 +171,16 @@ export async function handleChat(req, res) {
       memory
     );
     const stream = await streamChat(resolved.client, providerMessages, persona, model);
+    let responseText = "";
     for await (const chunk of stream) {
       const delta = chunk?.choices?.[0]?.delta?.content ?? "";
       if (delta) {
+        responseText += delta;
         res.write("data: " + JSON.stringify({ delta }) + "\n\n");
       }
     }
     res.write("data: [DONE]\n\n");
+    auditBase.response = responseText.slice(0, 20000);
     logEvent({ ...auditBase, durationMs: Date.now() - startedAt });
   } catch {
     res.write(

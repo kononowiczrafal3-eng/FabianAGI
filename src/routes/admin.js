@@ -104,12 +104,26 @@ function basePage(title, body) {
 </html>`;
 }
 
+function conversationHtml(event) {
+  const msgs = Array.isArray(event.messages) ? event.messages : [];
+  if (!msgs.length) return "";
+  const blocks = msgs.map((m) => {
+    const who = m.role === "user" ? "Użytkownik" : escapeHtml(event.persona || "Fabian");
+    return `<div style="margin-bottom:8px"><div class="mono" style="color:var(--orange);font-size:11px">${who}</div><div class="convMsg">${escapeHtml(m.content)}</div></div>`;
+  }).join("");
+  const resp = event.response
+    ? `<div style="margin-bottom:4px"><div class="mono" style="color:var(--orange);font-size:11px">${escapeHtml(event.persona || "Fabian")} (odpowiedź)</div><div class="convMsg">${escapeHtml(event.response)}</div></div>`
+    : "";
+  return `<details style="margin-top:6px"><summary class="mono" style="cursor:pointer;color:var(--text3);font-size:11px">rozmowa (${msgs.length}) + odpowiedź</summary><div style="margin-top:8px">${blocks}${resp}</div></details>`;
+}
+
 export async function handleAdmin(req, res) {
   res.writeHead(200, {
     "Content-Type": "text/html; charset=utf-8",
     "Cache-Control": "no-store",
     "X-Content-Type-Options": "nosniff"
   });
+  const ipFilter = new URL(req.url, "http://localhost").searchParams.get("ip") || "";
   if (!process.env.ADMIN_TOKEN) {
     res.end(basePage("Admin", "<h1>Panel administracyjny</h1><p>Brak konfiguracji. Ustaw zmienną <code>ADMIN_TOKEN</code> w Railway.</p>"));
     return;
@@ -118,18 +132,22 @@ export async function handleAdmin(req, res) {
     res.end(basePage("Logowanie", '<form class="loginBox" method="POST" action="/admin/login"><h1>Panel FabianAGI</h1><input type="password" name="password" placeholder="Hasło administratora" autofocus><button type="submit">Zaloguj</button></form>'));
     return;
   }
-  const events = readEvents(300);
-  const stats = computeStats(events);
+  let events = readEvents(500);
+  if (ipFilter) {
+    events = events.filter((e) => e.ip === ipFilter);
+  }
+  const stats = computeStats(ipFilter ? events : readEvents(500));
   const rows = events.map((e) => {
     const d = new Date(e.ts);
     const time = d.toLocaleString("pl-PL");
+    const convo = conversationHtml(e);
     return `<tr>
       <td class="mono">${time}</td>
-      <td class="ip">${escapeHtml(e.ip || "-")}</td>
+      <td class="ip"><a href="/admin?ip=${encodeURIComponent(e.ip || "")}">${escapeHtml(e.ip || "-")}</a></td>
       <td class="mono">${escapeHtml(e.model || "mini")}</td>
       <td>${escapeHtml(e.persona || "Fabian")}${e.personaMode === "replace" ? " <span class=mono>(replace)</span>" : ""}</td>
       <td class="mono">${e.msgs != null ? e.msgs : "-"}</td>
-      <td class="msg" title="${escapeHtml(e.lastUser || "")}">${escapeHtml(e.lastUser || "-")}</td>
+      <td class="msg" title="${escapeHtml(e.lastUser || "")}">${escapeHtml(e.lastUser || "-")}${convo}</td>
       <td class="mono">${e.durationMs != null ? e.durationMs + " ms" : "-"}</td>
       <td>${e.error ? '<span class="err">błąd</span>' : "ok"}</td>
     </tr>`;
@@ -137,7 +155,8 @@ export async function handleAdmin(req, res) {
   const modelRows = Object.entries(stats.models).sort((a, b) => b[1] - a[1])
     .map(([m, c]) => `${escapeHtml(m)}: ${c}`).join(" · ");
   res.end(basePage("Admin - FabianAGI", `
-    <h1>Panel administracyjny<small>logi czatu · retencja 30 dni</small></h1>
+    <h1>Panel administracyjny<small>logi czatu · retencja 30 dni</small>${ipFilter ? ` <a class="mono" href="/admin" style="font-size:12px">← wszystkie IP</a>` : ""}</h1>
+    ${ipFilter ? `<p class="mono" style="margin-bottom:14px;color:var(--orange)">filtr IP: ${escapeHtml(ipFilter)} · ${events.length} zdarzeń</p>` : ""}
     <div class="stats">
       <div class="stat"><b>${stats.total}</b><span>zapytań (okno 300)</span></div>
       <div class="stat"><b>${stats.last24h}</b><span>ostatnie 24 h</span></div>
