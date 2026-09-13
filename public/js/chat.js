@@ -8,7 +8,7 @@ import {
   saveChats,
   clearAllChats,
   setActiveConversation
-} from "/js/storage.js?v=1.4.0";
+} from "/js/storage.js?v=1.6.1";
 
 const state = loadChats();
 let sending = false;
@@ -249,6 +249,33 @@ function buildZipBlob(files) {
   eocd.setUint32(12, cdSize, true);
   eocd.setUint32(16, offset, true);
   return new Blob([...chunks, new Uint8Array(eocd.buffer)], { type: "application/zip" });
+}
+
+let hljsRequested = false;
+
+function ensureHljs() {
+  if (window.hljs || hljsRequested) return;
+  hljsRequested = true;
+  const css = document.createElement("link");
+  css.rel = "stylesheet";
+  css.href =
+    "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css";
+  document.head.appendChild(css);
+  const script = document.createElement("script");
+  script.src =
+    "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js";
+  script.onload = () => {
+    document
+      .querySelectorAll(".md pre.mdCode code")
+      .forEach((code) => {
+        try {
+          window.hljs.highlightElement(code);
+        } catch {
+          /* jezyk nierozpoznany */
+        }
+      });
+  };
+  document.head.appendChild(script);
 }
 
 function extractFileBlocks(text) {
@@ -697,6 +724,7 @@ function finalizeAssistant(textEl, full) {
     }
     textEl.parentElement.appendChild(wrap);
   }
+  ensureHljs();
   const blocks = textEl.querySelectorAll("pre.mdCode");
   for (const pre of blocks) {
     const code = pre.querySelector("code");
@@ -887,9 +915,18 @@ function handleSend() {
     conversation = createConversation(state, content.slice(0, 48));
   }
 
+  const sentAttachments = pendingAttachments.slice(0, 5);
+  let messageContent = content;
+  if (content.length > fileThreshold) {
+    sentAttachments.push({ name: "wiadomosc.txt", content });
+    messageContent = content.slice(0, 280) + "…";
+  }
+  pendingAttachments = [];
+  renderAttachRow();
+
   const userMessage = addMessage(state, conversation.id, "user", messageContent);
-  if (pendingAttachments.length) {
-    userMessage.attachments = pendingAttachments.map((att) => ({ name: att.name }));
+  if (sentAttachments.length) {
+    userMessage.attachments = sentAttachments.map((att) => ({ name: att.name }));
   }
   if (saveChats(state) === "pruned") {
     setWarnStatus("Historia przycięta - limit pamięci przeglądarki");
@@ -899,15 +936,6 @@ function handleSend() {
   updateCounter();
   elements.chatEmpty.style.display = "none";
   elements.chatTitle.textContent = conversation.title;
-
-  const sentAttachments = pendingAttachments.slice(0, 5);
-  let messageContent = content;
-  if (content.length > fileThreshold) {
-    sentAttachments.push({ name: "wiadomosc.txt", content });
-    messageContent = content.slice(0, 280) + "…";
-  }
-  pendingAttachments = [];
-  renderAttachRow();
 
   const userNode = buildMessageNode(
     "user",
@@ -936,10 +964,7 @@ elements.composerInput.addEventListener("keydown", (event) => {
   }
 });
 
-if (elements.attachBtn && elements.fileInput) {
-  elements.attachBtn.addEventListener("click", () => elements.fileInput.click());
-
-  async function handleFiles(fileList) {
+async function handleFiles(fileList) {
   const files = Array.from(fileList || []).slice(
     0,
     Math.max(0, 5 - pendingAttachments.length)
@@ -962,8 +987,10 @@ if (elements.attachBtn && elements.fileInput) {
   }
   renderAttachRow();
   clearBusyStatus();
-  }
+}
 
+if (elements.attachBtn && elements.fileInput) {
+  elements.attachBtn.addEventListener("click", () => elements.fileInput.click());
   elements.fileInput.addEventListener("change", () => {
     handleFiles(elements.fileInput.files);
     elements.fileInput.value = "";
@@ -1243,7 +1270,7 @@ elements.settingsSave.addEventListener("click", () => {
     apiKey: elements.settingsApiKey.value.trim(),
     baseUrl: elements.settingsBaseUrl.value.trim(),
     name: elements.settingsName.value.trim().slice(0, 30),
-    personality: elements.settingsPersonality.value.trim().slice(0, 2000),
+    personality: elements.settingsPersonality.value.trim().slice(0, 5000),
     personaMode:
       elements.settingsPersonaMode &&
       elements.settingsPersonaMode.value === "replace"

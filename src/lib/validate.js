@@ -58,7 +58,7 @@ export function sanitizePersona(raw) {
     if (name) result.name = name;
   }
   if (typeof raw.personality === "string") {
-    const personality = raw.personality.trim().slice(0, 2000);
+    const personality = raw.personality.trim().slice(0, 5000);
     if (personality) result.personality = personality;
   }
   if (raw.mode === "replace") result.mode = "replace";
